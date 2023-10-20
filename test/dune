@@ -11,5 +11,5 @@
 
 (library
  (name gradedtests)
- (modules gradedtests progasts sp22_tests)
+ (modules gradedtests progasts)
  (libraries util x86 ll oat))
