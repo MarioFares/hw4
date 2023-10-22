@@ -362,18 +362,24 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
  *)
 
 module Stmt = struct 
-  let cmp_ret c en_opt = 
+  let cmp_ret (c : Ctxt.t) (en_opt : exp node option) : Ctxt.t * stream = 
     match en_opt with 
     | None -> c, [T (Ret (Void, None))]
     | Some expn -> 
       let ty, op, e_stream = cmp_exp c expn in 
-      let stream = e_stream >@ [T (Ret (ty, Some op))] in c, stream
+      let stream = e_stream >@ [T (Ret (ty, Some op))] in 
+        c, stream
+
+  let cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream = 
+    let ty, op, e_stream = cmp_exp c elt in 
+    let c = Ctxt.add c id (ty, op) in 
+      c, e_stream
 end
 
 let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * stream =
   match stmt with 
   | Assn (e1, e2) -> failwith "not implemented"
-  | Decl vdecl -> failwith "not implemented"
+  | Decl vdecl -> Stmt.cmp_decl c vdecl
   | Ret en_opt -> Stmt.cmp_ret c en_opt
   | SCall (e, lst) -> failwith ""
   | If (exp, lst,  lst2) -> failwith "not implemented"
@@ -441,20 +447,22 @@ let cmp_global_ctxt (c:Ctxt.t) (p:Ast.prog) : Ctxt.t =
 let cmp_fdecl (c:Ctxt.t) ({elt}:Ast.fdecl node) : Ll.fdecl * (Ll.gid * Ll.gdecl) list =
   let frtyp, fname, args, body = elt.frtyp, elt.fname, elt.args, elt.body in 
   let f_rty = cmp_ret_ty frtyp in 
-  let gen_args = List.map (fun (ty, id) -> ty, gensym id) args in
-  let arg_setup = 
-    gen_args
-    |> List.map (fun (ty, id) -> 
-        let id' = gensym id in
-        let ty' = cmp_ty ty in 
-        []
+  let c, arg_setup = 
+    List.fold_left (fun (c, stream) (ty, id) ->
+      let id' = gensym id in
+      let ty' = cmp_ty ty in 
+      let stream = 
+        stream
         >:: I (id', Alloca ty')
-        >:: I ("", Store (ty', Id id, Id id')))
-    |> List.flatten in    
+        >:: I ("", Store (ty', Id id, Id id')) in
+      let c = Ctxt.add c id (ty', Id id')
+        in c, stream
+    ) (c, []) args
+  in    
   let c, body_stream = cmp_block c f_rty body in
   let f_cfg, decl_list = cfg_of_stream (arg_setup >@ body_stream) in 
   let f_ty = List.map (fun x -> cmp_ty @@ fst x) args, f_rty in 
-  let f_param = List.map snd gen_args in 
+  let f_param = List.map snd args in 
   {f_ty; f_param; f_cfg}, decl_list
 
 
