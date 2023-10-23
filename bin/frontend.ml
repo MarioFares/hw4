@@ -348,20 +348,35 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | Id id -> failwith ""
   | Index (expn1, expn2) -> failwith ""
   | Call (expn, expn_lst) -> failwith ""
-  | Bop (binop, expn1, expn2) -> 
-    let ty1, op1, stream1 = cmp_exp c expn1 in 
-    let _, op2, stream2 = cmp_exp c expn2 in 
-    let llbinop = Exp.oat_to_llbinop binop in 
-    let uid = gensym "temp" in 
-    let stream = 
-      stream1
-      >@ stream2 
-      >:: I (uid, Binop (llbinop, ty1, op1, op2))
+  | Bop (oat_binop, oat_e1, oat_e2) -> 
+    let _, ll_op1, ll_stream1 = cmp_exp c oat_e1 in 
+    let _, ll_op2, ll_stream2 = cmp_exp c oat_e2 in 
+    let _, _, oat_ty = typ_of_binop oat_binop in  
+    let ll_ty = cmp_ty oat_ty in  
+    let ll_binop = Exp.oat_to_llbinop oat_binop in 
+    let ll_uid = gensym "temp" in 
+    let ll_stream = 
+      ll_stream1
+      >@ ll_stream2 
+      >:: I (ll_uid, Binop (ll_binop, ll_ty, ll_op1, ll_op2))
     in 
-    ty1, Id uid, stream  
-  | Uop (unop, expn) -> failwith ""
-
-
+      ll_ty, Id ll_uid, ll_stream  
+  | Uop (oat_unop, oat_e) ->
+    let _, ll_op, ll_stream1 = cmp_exp c oat_e in
+    let _, oat_ty = typ_of_unop oat_unop in 
+    let ll_ty = cmp_ty oat_ty in 
+    let ll_uid = gensym "temp" in 
+    let ll_stream2 = begin
+      match oat_unop with 
+      | Neg    -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (Int64.min_int)))]
+      | Bitnot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (-1L)))]
+      | Lognot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (1L)))]
+    end in
+    let ll_stream = 
+      ll_stream1
+      >@ ll_stream2 
+    in 
+      ll_ty, Id ll_uid, ll_stream  
 
 (* Compile a statement in context c with return typ rt. Return a new context, 
    possibly extended with new local bindings, and the instruction stream
