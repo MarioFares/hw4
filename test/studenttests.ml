@@ -15,6 +15,9 @@ let easy_ret_tests = [
 ; ("hw4programs/my_tests/ret_mul.oat",  "", "42")
 ; ("hw4programs/my_tests/ret_iand.oat", "",  "4")
 ; ("hw4programs/my_tests/ret_ior.oat",  "",  "5")
+; ("hw4programs/my_tests/ret_shl.oat",  "",  "4")
+; ("hw4programs/my_tests/ret_shr.oat",  "",  "2")
+; ("hw4programs/my_tests/ret_sar.oat",  "",  "4")
 ]
 
 let provided_tests : suite = [
