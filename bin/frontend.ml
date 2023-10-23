@@ -345,7 +345,9 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | CStr str -> failwith ""
   | CArr (ty, expn_lst) -> failwith ""
   | NewArr (ty, expn) -> failwith ""
-  | Id id -> failwith ""
+  | Id id -> 
+    let ll_ty, ll_op = Ctxt.lookup id c 
+    in ll_ty, ll_op, []
   | Index (expn1, expn2) -> failwith ""
   | Call (expn, expn_lst) -> failwith ""
   | Bop (oat_binop, oat_e1, oat_e2) -> 
@@ -354,7 +356,7 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
     let _, _, oat_ty = typ_of_binop oat_binop in  
     let ll_ty = cmp_ty oat_ty in  
     let ll_binop = Exp.oat_to_llbinop oat_binop in 
-    let ll_uid = gensym "temp" in 
+    let ll_uid = gensym "binop_temp" in 
     let ll_stream = 
       ll_stream1
       >@ ll_stream2 
@@ -365,7 +367,7 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
     let _, ll_op, ll_stream1 = cmp_exp c oat_e in
     let _, oat_ty = typ_of_unop oat_unop in 
     let ll_ty = cmp_ty oat_ty in 
-    let ll_uid = gensym "temp" in 
+    let ll_uid = gensym "unop_temp" in 
     let ll_stream2 = begin
       match oat_unop with 
       | Neg    -> [I (ll_uid, Binop (Ll.Mul, ll_ty, ll_op, Const (-1L)))]
