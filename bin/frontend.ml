@@ -339,9 +339,9 @@ end
 
 let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * stream =
   match exp with 
-  | CNull rty -> failwith ""
-  | CBool bl -> I1, Const (if bl then 1L else 0L), []
-  | CInt i64 -> I64, Const i64, []
+  | CNull oat_rty -> Ptr (cmp_rty oat_rty), Null, []
+  | CBool oat_bl -> I1, Const (if oat_bl then 1L else 0L), []
+  | CInt oat_i64 -> I64, Const oat_i64, []
   | CStr str -> failwith ""
   | CArr (ty, expn_lst) -> failwith ""
   | NewArr (ty, expn) -> failwith ""
