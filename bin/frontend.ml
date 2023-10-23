@@ -345,8 +345,8 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | CStr str -> failwith ""
   | CArr (ty, expn_lst) -> failwith ""
   | NewArr (ty, expn) -> failwith ""
-  | Id id -> 
-    let ll_ty, ll_op = Ctxt.lookup id c 
+  | Id oat_id -> 
+    let ll_ty, ll_op = Ctxt.lookup oat_id c 
     in ll_ty, ll_op, []
   | Index (expn1, expn2) -> failwith ""
   | Call (expn, expn_lst) -> failwith ""
