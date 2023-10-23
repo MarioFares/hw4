@@ -368,7 +368,7 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
     let ll_uid = gensym "temp" in 
     let ll_stream2 = begin
       match oat_unop with 
-      | Neg    -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (Int64.min_int)))]
+      | Neg    -> [I (ll_uid, Binop (Ll.Mul, ll_ty, ll_op, Const (-1L)))]
       | Bitnot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (-1L)))]
       | Lognot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (1L)))]
     end in
