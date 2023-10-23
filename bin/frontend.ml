@@ -316,7 +316,26 @@ let oat_alloc_array (t:Ast.ty) (size:Ll.operand) : Ll.ty * operand * stream =
      (CArr) and the (NewArr) expressions
 
 *)
-
+module Exp = struct 
+  let oat_to_llbinop binop = 
+    match binop with 
+    | Add -> Ll.Add
+    | Sub -> Ll.Sub
+    | Mul -> Ll.Mul
+    | Eq -> failwith ""
+    | Neq -> failwith ""
+    | Lt -> failwith ""
+    | Lte -> failwith ""
+    | Gt -> failwith ""
+    | Gte -> failwith ""
+    | And -> Ll.And
+    | Or -> Ll.Or
+    | IAnd -> Ll.And
+    | IOr -> Ll.Or 
+    | Shl -> Ll.Shl
+    | Shr -> Ll.Lshr
+    | Sar -> Ll.Ashr
+end
 
 let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * stream =
   match exp with 
@@ -329,7 +348,17 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | Id id -> failwith ""
   | Index (expn1, expn2) -> failwith ""
   | Call (expn, expn_lst) -> failwith ""
-  | Bop (binop, expn1, expn2) -> failwith ""
+  | Bop (binop, expn1, expn2) -> 
+    let ty1, op1, stream1 = cmp_exp c expn1 in 
+    let _, op2, stream2 = cmp_exp c expn2 in 
+    let llbinop = Exp.oat_to_llbinop binop in 
+    let uid = gensym "temp" in 
+    let stream = 
+      stream1
+      >@ stream2 
+      >:: I (uid, Binop (llbinop, ty1, op1, op2))
+    in 
+    ty1, Id uid, stream  
   | Uop (unop, expn) -> failwith ""
 
 
@@ -362,6 +391,7 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
  *)
 
 module Stmt = struct 
+  (* Compile a return statement. *)
   let cmp_ret (c : Ctxt.t) (en_opt : exp node option) : Ctxt.t * stream = 
     match en_opt with 
     | None -> c, [T (Ret (Void, None))]
@@ -370,6 +400,8 @@ module Stmt = struct
       let stream = e_stream >@ [T (Ret (ty, Some op))] in 
         c, stream
 
+
+  (* Compile a declaration (starts with var). *)
   let cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream = 
     let ty, op, e_stream = cmp_exp c elt in 
     let c = Ctxt.add c id (ty, op) in 
@@ -394,7 +426,7 @@ and cmp_block (c:Ctxt.t) (rt:Ll.ty) (stmts:Ast.block) : Ctxt.t * stream =
       c, code >@ stmt_code
     ) (c,[]) stmts
 
-let gdecl_to_ctxt c {elt={name;init={elt;_}}} = 
+let gdecl_to_ctxt (c : Ctxt.t) {elt={name;init={elt;_}}} : Ctxt.t = 
   let t = 
     match elt with 
     | CNull rty -> Ptr (cmp_rty rty) 
