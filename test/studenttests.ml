@@ -21,6 +21,12 @@ let easy_ret_tests = [
 ; ("hw4programs/my_tests/ret_bitnot.oat",  "",  "1")
 ]
 
+let easy_call_tests = [
+  ("hw4programs/my_tests/call_1.oat", "", "10")
+; ("hw4programs/my_tests/call_2.oat", "", "11")
+]
+
 let provided_tests : suite = [
   Test (">>> easy ret tests", executed_oat_file easy_ret_tests);
+  Test (">>> easy call tests", executed_oat_file easy_call_tests);
 ] 

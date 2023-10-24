@@ -1,0 +1,7 @@
+int rt() {
+    return 10;
+}
+
+int program(int argc, string[] argv) {
+  return rt();
+}

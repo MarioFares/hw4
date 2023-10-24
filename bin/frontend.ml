@@ -317,8 +317,7 @@ let oat_alloc_array (t:Ast.ty) (size:Ll.operand) : Ll.ty * operand * stream =
 
 *)
 module Exp = struct 
-  let oat_to_llbinop binop = 
-    match binop with 
+  let oat_to_llbinop = function 
     | Add -> Ll.Add
     | Sub -> Ll.Sub
     | Mul -> Ll.Mul
@@ -335,6 +334,18 @@ module Exp = struct
     | Shl -> Ll.Shl
     | Shr -> Ll.Lshr
     | Sar -> Ll.Ashr
+
+  let dptr = function 
+    | Ptr t -> t 
+    | _ -> failwith "expected a pointer"
+
+  let get_id = function
+    | {elt=Id id} -> id 
+    | failwith -> "expected id"
+
+  let llfty_to_frety = function
+    | Ptr (Fun (_, rety)) -> rety 
+    | _ -> failwith "expected function type" 
 end
 
 let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * stream =
@@ -346,10 +357,25 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | CArr (ty, expn_lst) -> failwith ""
   | NewArr (ty, expn) -> failwith ""
   | Id oat_id -> 
-    let ll_ty, ll_op = Ctxt.lookup oat_id c 
-    in ll_ty, ll_op, []
+    let ll_ty, ll_op = Ctxt.lookup oat_id c in 
+    let ll_uid = gensym "id" in 
+    let ll_stream = [I (ll_uid, Load (ll_ty, ll_op))]
+    in 
+      Exp.dptr ll_ty, Id ll_uid, ll_stream
   | Index (expn1, expn2) -> failwith ""
-  | Call (expn, expn_lst) -> failwith ""
+  | Call (oat_fn_name, oat_fn_args) -> 
+    let fn_name = Exp.get_id oat_fn_name in 
+    let ll_ty, ll_op = Ctxt.lookup_function fn_name c in 
+    let ll_frety = Exp.llfty_to_frety ll_ty in 
+    let ll_args = List.map (cmp_exp c) oat_fn_args in 
+    let ll_args' = List.map (fun (ty, op, _) -> ty, op) ll_args in
+    let ll_arg_streams = List.map (fun (_, _, stream) -> stream) ll_args in
+    let ll_uid = gensym "fn_retval" in 
+    let ll_stream = 
+      List.flatten ll_arg_streams 
+      >:: (I (ll_uid, Call (ll_frety, ll_op, ll_args'))) 
+    in
+      ll_frety, Id ll_uid, ll_stream 
   | Bop (oat_binop, oat_e1, oat_e2) -> 
     let _, ll_op1, ll_stream1 = cmp_exp c oat_e1 in 
     let _, ll_op2, ll_stream2 = cmp_exp c oat_e2 in 
@@ -504,7 +530,7 @@ let cmp_fdecl (c:Ctxt.t) ({elt}:Ast.fdecl node) : Ll.fdecl * (Ll.gid * Ll.gdecl)
         stream
         >:: I (id', Alloca ty')
         >:: I ("", Store (ty', Id id, Id id')) in
-      let c = Ctxt.add c id (ty', Id id')
+      let c = Ctxt.add c id (Ptr ty', Id id')
         in c, stream
     ) (c, []) args
   in    

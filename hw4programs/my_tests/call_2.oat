@@ -1,0 +1,7 @@
+int rt(int x) {
+    return x;
+}
+
+int program(int argc, string[] argv) {
+  return rt(11);
+}
