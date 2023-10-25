@@ -451,8 +451,8 @@ module Stmt = struct
     let ll_uid = gensym "decl" in
     let ll_stream = 
       ll_stream1
-      >:: I (ll_uid, Alloca ll_ty)
-      >:: I ("", Store (ll_ty, ll_op, Id ll_uid))
+      >:: E (ll_uid, Alloca ll_ty)
+      >:: E ("", Store (ll_ty, ll_op, Id ll_uid))
     in
     let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
       c, ll_stream
@@ -535,8 +535,8 @@ let cmp_fdecl (c:Ctxt.t) ({elt}:Ast.fdecl node) : Ll.fdecl * (Ll.gid * Ll.gdecl)
       let ty' = cmp_ty ty in 
       let stream = 
         stream
-        >:: I (id', Alloca ty')
-        >:: I ("", Store (ty', Id id, Id id')) in
+        >:: E (id', Alloca ty')
+        >:: E ("", Store (ty', Id id, Id id')) in
       let c = Ctxt.add c id (Ptr ty', Id id')
         in c, stream
     ) (c, []) args
