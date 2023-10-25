@@ -1,0 +1,5 @@
+int program(int argc, string[] argv) {
+    var x = 2;
+    var y = 4;
+    return x * y;
+}

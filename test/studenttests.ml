@@ -26,7 +26,16 @@ let easy_call_tests = [
 ; ("hw4programs/my_tests/call_2.oat", "", "11")
 ]
 
+let easy_decl_tests = [
+  ("hw4programs/my_tests/decl_1.oat", "", "9")
+; ("hw4programs/my_tests/decl_2.oat", "", "18")
+; ("hw4programs/my_tests/decl_3.oat", "", "8")
+; ("hw4programs/my_tests/decl_4.oat", "", "3")
+; ("hw4programs/my_tests/decl_5.oat", "", "5")
+]
+
 let provided_tests : suite = [
   Test (">>> easy ret tests", executed_oat_file easy_ret_tests);
   Test (">>> easy call tests", executed_oat_file easy_call_tests);
+  Test (">>> easy decl tests", executed_oat_file easy_decl_tests);
 ] 

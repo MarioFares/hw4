@@ -1,0 +1,20 @@
+int r() {
+    var x = 1;
+    return x;
+}
+
+int f() {
+    var x = 2;
+    return x;
+}
+
+int z(int x) {
+    return x;
+}
+
+int program(int argc, string[] argv) {
+    var x = f();
+    var y = r(); 
+    var z = z(2); 
+    return x + y + z;
+}

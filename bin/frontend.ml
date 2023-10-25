@@ -438,17 +438,24 @@ module Stmt = struct
   let cmp_ret (c : Ctxt.t) (en_opt : exp node option) : Ctxt.t * stream = 
     match en_opt with 
     | None -> c, [T (Ret (Void, None))]
-    | Some expn -> 
-      let ty, op, e_stream = cmp_exp c expn in 
-      let stream = e_stream >@ [T (Ret (ty, Some op))] in 
-        c, stream
+    | Some oat_e -> 
+      let ll_ty, ll_op, ll_stream1 = cmp_exp c oat_e in 
+      let ll_stream = ll_stream1 >@ [T (Ret (ll_ty, Some ll_op))] 
+      in 
+        c, ll_stream
 
 
   (* Compile a declaration (starts with var). *)
   let cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream = 
-    let ty, op, e_stream = cmp_exp c elt in 
-    let c = Ctxt.add c id (ty, op) in 
-      c, e_stream
+    let ll_ty, ll_op, ll_stream1 = cmp_exp c elt in 
+    let ll_uid = gensym "decl" in
+    let ll_stream = 
+      ll_stream1
+      >:: I (ll_uid, Alloca ll_ty)
+      >:: I ("", Store (ll_ty, ll_op, Id ll_uid))
+    in
+    let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
+      c, ll_stream
 end
 
 let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * stream =
