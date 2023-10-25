@@ -34,8 +34,17 @@ let easy_decl_tests = [
 ; ("hw4programs/my_tests/decl_5.oat", "", "5")
 ]
 
+let easy_assign_tests = [
+  ("hw4programs/my_tests/assign_1.oat", "", "5")
+; ("hw4programs/my_tests/assign_2.oat", "", "1")
+; ("hw4programs/my_tests/assign_3.oat", "", "30")
+; ("hw4programs/my_tests/assign_4.oat", "", "50")
+; ("hw4programs/my_tests/assign_5.oat", "", "40")
+]
+
 let provided_tests : suite = [
   Test (">>> easy ret tests", executed_oat_file easy_ret_tests);
   Test (">>> easy call tests", executed_oat_file easy_call_tests);
   Test (">>> easy decl tests", executed_oat_file easy_decl_tests);
+  Test (">>> easy assign tests", executed_oat_file easy_assign_tests);
 ] 

@@ -456,11 +456,24 @@ module Stmt = struct
     in
     let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
       c, ll_stream
+
+  let cmp_assn (c : Ctxt.t) ({elt=lhs} : exp node) (e : exp node) : Ctxt.t * stream =
+    let ll_e_ty, ll_e_op, ll_e_stream = cmp_exp c e in
+    match lhs with 
+    | Id oat_id -> 
+      let ll_id_ty, ll_id_op = Ctxt.lookup oat_id c in
+      let ll_stream = 
+        ll_e_stream 
+        >:: I ("", Store (ll_e_ty, ll_e_op, ll_id_op)) 
+      in
+        c, ll_stream
+    | Index _ -> failwith "index assn not implemented"
+    | _ -> failwith "improper lhs"
 end
 
 let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * stream =
   match stmt with 
-  | Assn (e1, e2) -> failwith "not implemented"
+  | Assn (e1, e2) -> Stmt.cmp_assn c e1 e2
   | Decl vdecl -> Stmt.cmp_decl c vdecl
   | Ret en_opt -> Stmt.cmp_ret c en_opt
   | SCall (e, lst) -> failwith ""
