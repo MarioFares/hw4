@@ -1,0 +1,15 @@
+int program(int argc, string[] argv) {
+    var x = 20;
+
+    if (x == 10) {
+        x = 20;
+    } else {
+        x = 10;
+    }
+
+    if (x == 10) {
+        x = 5;
+    } 
+
+    return x;
+}

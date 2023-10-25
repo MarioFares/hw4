@@ -1,0 +1,10 @@
+int program (int argc, string[] argv) {
+    var x = 10;
+    var y = 10;
+
+    if (x >= y) {
+        x = 30;
+    }
+
+    return x;
+}

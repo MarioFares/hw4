@@ -1,0 +1,14 @@
+int program(int argc, string[] argv) {
+    var x = 10;
+    if (x < 1) {
+        x = 2;
+    } else if (x < 5) {
+        x = 5;
+    } else if  (x < 10) {
+        x = 10;
+    } else if (x == 10) {
+        x = 31;
+    }
+
+    return x;
+}

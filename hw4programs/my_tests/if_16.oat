@@ -1,0 +1,13 @@
+int program(int argc, string[] argv) {
+    var x = 5;
+    var y = 6;
+    var z = 7;
+
+    var ret = 0;
+
+    if (x + y == 11 & y + z == 13) {
+        ret = 5;
+    }
+    
+    return ret;
+}
