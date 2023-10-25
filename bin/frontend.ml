@@ -321,12 +321,6 @@ module Exp = struct
     | Add -> Ll.Add
     | Sub -> Ll.Sub
     | Mul -> Ll.Mul
-    | Eq -> failwith ""
-    | Neq -> failwith ""
-    | Lt -> failwith ""
-    | Lte -> failwith ""
-    | Gt -> failwith ""
-    | Gte -> failwith ""
     | And -> Ll.And
     | Or -> Ll.Or
     | IAnd -> Ll.And
@@ -334,6 +328,16 @@ module Exp = struct
     | Shl -> Ll.Shl
     | Shr -> Ll.Lshr
     | Sar -> Ll.Ashr
+    | _ -> failwith "improper arithmetic/logical binop"
+
+  let oatbinop_to_cnd = function 
+    | Eq -> Ll.Eq
+    | Neq -> Ll.Ne
+    | Lt -> Ll.Slt
+    | Lte -> Ll.Sle
+    | Gt -> Ll.Sgt
+    | Gte -> Ll.Sge
+    | _ -> failwith "improper conditional binop"
 
   let dptr = function 
     | Ptr t -> t 
@@ -379,14 +383,24 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | Bop (oat_binop, oat_e1, oat_e2) -> 
     let _, ll_op1, ll_stream1 = cmp_exp c oat_e1 in 
     let _, ll_op2, ll_stream2 = cmp_exp c oat_e2 in 
-    let _, _, oat_ty = typ_of_binop oat_binop in  
+    let oat_ty1, oat_ty2, oat_ty = typ_of_binop oat_binop in  
     let ll_ty = cmp_ty oat_ty in  
-    let ll_binop = Exp.oat_to_llbinop oat_binop in 
     let ll_uid = gensym "binop_temp" in 
+    let ll_stream = begin
+      match oat_ty1, oat_ty2, oat_ty with
+      | TInt, TInt, TInt
+      | TBool, TBool, TBool -> 
+        let ll_binop = Exp.oat_to_llbinop oat_binop in 
+        I (ll_uid, Binop (ll_binop, ll_ty, ll_op1, ll_op2))
+      | TInt, TInt, TBool ->
+        let ll_cnd = Exp.oatbinop_to_cnd oat_binop in 
+        I (ll_uid, Icmp (ll_cnd, cmp_ty TInt, ll_op1, ll_op2))
+      | _ -> failwith "invalid types for binops"
+    end in
     let ll_stream = 
       ll_stream1
       >@ ll_stream2 
-      >:: I (ll_uid, Binop (ll_binop, ll_ty, ll_op1, ll_op2))
+      >:: ll_stream
     in 
       ll_ty, Id ll_uid, ll_stream  
   | Uop (oat_unop, oat_e) ->
@@ -457,6 +471,7 @@ module Stmt = struct
     let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
       c, ll_stream
 
+  (* Compile an assignment, for a var or for indexed array. *)
   let cmp_assn (c : Ctxt.t) ({elt=lhs} : exp node) (e : exp node) : Ctxt.t * stream =
     let ll_e_ty, ll_e_op, ll_e_stream = cmp_exp c e in
     match lhs with 
@@ -469,6 +484,7 @@ module Stmt = struct
         c, ll_stream
     | Index _ -> failwith "index assn not implemented"
     | _ -> failwith "improper lhs"
+
 end
 
 let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * stream =
@@ -477,7 +493,27 @@ let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * str
   | Decl vdecl -> Stmt.cmp_decl c vdecl
   | Ret en_opt -> Stmt.cmp_ret c en_opt
   | SCall (e, lst) -> failwith ""
-  | If (exp, lst,  lst2) -> failwith "not implemented"
+  | If (oat_exp, oat_true_block,  oat_else_block) -> 
+    let _, ll_op, ll_stream1 = cmp_exp c oat_exp in 
+    let c, ll_true_stream = cmp_block c Void oat_true_block in
+    let c, ll_else_stream = cmp_block c Void oat_else_block in
+    let ll_uid = gensym "cmp_res" in 
+    let ll_true_id = gensym "true_block" in 
+    let ll_else_id = gensym "else_block" in
+    let ll_end_id = gensym "if_end" in 
+    let ll_stream = 
+      ll_stream1
+      >:: I (ll_uid, Icmp (Ll.Eq, Ll.I1, ll_op, Const 1L))
+      >:: T (Cbr (Id ll_uid, ll_true_id, ll_else_id))
+      >:: L ll_true_id
+      >@ ll_true_stream
+      >:: T (Br ll_end_id)
+      >:: L ll_else_id
+      >@ ll_else_stream
+      >:: T (Br ll_end_id)
+      >:: L ll_end_id 
+    in
+      c, ll_stream
   | For (vdecl_lst, exp_opt, stmt_opt, stmt_lst) -> failwith ""
   | While (e, stmt_lst) -> failwith ""
 
