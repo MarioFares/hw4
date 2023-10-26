@@ -1,0 +1,12 @@
+int program(int argc, string[] argv) {
+    var x = 0;
+
+    while (true) {
+        x = x + 1;
+        if (x == 10) {
+            return x;
+        }
+    }
+
+    return 1;
+}

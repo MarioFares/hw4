@@ -1,0 +1,9 @@
+int program(int argc, string[] argv) {
+    var x = 0;
+
+    while (false) {
+        x = 50;
+    }
+
+    return x;
+}

@@ -73,10 +73,24 @@ let easy_if_tests = [
 ; ("hw4programs/my_tests/if_19.oat", "", "5")
 ]
 
+let easy_while_tests = [
+  (* Simple looping and updating *)
+  ("hw4programs/my_tests/while_1.oat", "", "5")
+; ("hw4programs/my_tests/while_2.oat", "", "1")
+; ("hw4programs/my_tests/while_3.oat", "", "50")
+; ("hw4programs/my_tests/while_4.oat", "", "50")
+; ("hw4programs/my_tests/while_5.oat", "", "20")
+; ("hw4programs/my_tests/while_6.oat", "", "0")
+; ("hw4programs/my_tests/while_7.oat", "", "10")
+; ("hw4programs/my_tests/while_8.oat", "", "0")
+; ("hw4programs/my_tests/while_9.oat", "", "11")
+]
+
 let provided_tests : suite = [
   Test (">>> easy ret tests", executed_oat_file easy_ret_tests);
   Test (">>> easy call tests", executed_oat_file easy_call_tests);
   Test (">>> easy decl tests", executed_oat_file easy_decl_tests);
   Test (">>> easy assign tests", executed_oat_file easy_assign_tests);
   Test (">>> easy if tests", executed_oat_file easy_if_tests);
+  Test (">>> easy while tests", executed_oat_file easy_while_tests);
 ] 

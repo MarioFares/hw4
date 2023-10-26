@@ -515,7 +515,26 @@ let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * str
     in
       c, ll_stream
   | For (vdecl_lst, exp_opt, stmt_opt, stmt_lst) -> failwith ""
-  | While (e, stmt_lst) -> failwith ""
+  | While (oat_exp, oat_block) -> 
+    let _, ll_op, ll_stream1 = cmp_exp c oat_exp in
+    let c, ll_body_stream = cmp_block c Ll.Void oat_block in 
+    let ll_uid = gensym "cmp_res" in 
+    let ll_entry_uid = gensym "while_start" in
+    let ll_body_uid = gensym "while_body" in
+    let ll_exit_uid = gensym "while_end" in 
+    let ll_stream =
+      []
+      >:: T (Br ll_entry_uid)
+      >:: L ll_entry_uid 
+      >@ ll_stream1
+      >:: I (ll_uid, Icmp (Ll.Eq, Ll.I1, ll_op, Const 1L))
+      >:: T (Cbr (Id ll_uid, ll_body_uid, ll_exit_uid))
+      >:: L ll_body_uid
+      >@ ll_body_stream
+      >:: T (Br ll_entry_uid)
+      >:: L ll_exit_uid
+    in
+      c, ll_stream
 
 
 (* Compile a series of statements *)

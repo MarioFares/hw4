@@ -1,0 +1,13 @@
+int program(int argc, string[] argv) {
+    var x = 10;
+    var y = 5;
+    var z = 0;
+
+    while (x < 20 | y < 15) {
+        y = y + 1;
+        x = x + 1;
+        z = x;
+    }
+
+    return z;
+}
