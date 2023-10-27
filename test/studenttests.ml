@@ -86,6 +86,15 @@ let easy_while_tests = [
 ; ("hw4programs/my_tests/while_9.oat", "", "11")
 ]
 
+let easy_for_tests = [
+  (* Normal, full-3 for loops *)
+  ("hw4programs/my_tests/for_1.oat", "", "5")
+; ("hw4programs/my_tests/for_2.oat", "", "0")
+; ("hw4programs/my_tests/for_3.oat", "", "5")
+  (* Multiple decls for loops *)
+; ("hw4programs/my_tests/for_4.oat", "", "19")
+]
+
 let provided_tests : suite = [
   Test (">>> easy ret tests", executed_oat_file easy_ret_tests);
   Test (">>> easy call tests", executed_oat_file easy_call_tests);
@@ -93,4 +102,5 @@ let provided_tests : suite = [
   Test (">>> easy assign tests", executed_oat_file easy_assign_tests);
   Test (">>> easy if tests", executed_oat_file easy_if_tests);
   Test (">>> easy while tests", executed_oat_file easy_while_tests);
+  Test (">>> easy for tests", executed_oat_file easy_for_tests);
 ] 

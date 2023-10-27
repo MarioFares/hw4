@@ -1,0 +1,10 @@
+int program(int argc, string[] argv) {
+    var x = 0;
+
+    for (var i = 0, var j = 0; i + j < 20; i = i + 1;) {
+        j = j + 1;
+        x = i + j;
+    }
+
+    return x;
+}

@@ -514,7 +514,16 @@ let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * str
       >:: L ll_end_id 
     in
       c, ll_stream
-  | For (vdecl_lst, exp_opt, stmt_opt, stmt_lst) -> failwith ""
+  | For (vdecl_lst, exp_opt, stmt_opt, stmt_lst) -> 
+    let oat_cnd = match exp_opt with None -> no_loc (CBool true) | Some e -> e in 
+    let oat_incs = match stmt_opt with None -> [] | Some stmt -> [stmt] in 
+    let oat_while_loop = 
+      List.map (fun x -> no_loc @@ Decl x) vdecl_lst 
+      @ [
+        no_loc @@ While (oat_cnd, stmt_lst @ oat_incs) 
+      ]
+    in
+      cmp_block c Ll.Void oat_while_loop
   | While (oat_exp, oat_block) -> 
     let _, ll_op, ll_stream1 = cmp_exp c oat_exp in
     let c, ll_body_stream = cmp_block c Ll.Void oat_block in 
