@@ -1,0 +1,7 @@
+global arr = new int[]{1, 2, 3, 4};
+
+int program(int argc, string[] argv) {
+    var x = arr[1];
+
+    return x;
+}

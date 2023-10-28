@@ -297,7 +297,9 @@ let oat_alloc_array (t:Ast.ty) (size:Ll.operand) : Ll.ty * operand * stream =
     [ arr_id, Call(arr_ty, Gid "oat_alloc_array", [I64, size])
     ; ans_id, Bitcast(arr_ty, Id arr_id, ans_ty) ]
 
-
+let get_arr_el_ty : Ll.ty -> Ll.ty = function 
+  | Ptr (Struct (_ :: Array (n, t) :: tl)) -> t
+  | _ -> failwith "get_arr_el_ty: invalid arg"
 
 
 (* Compiles an expression exp in context c, outputting the Ll operand that will
@@ -357,17 +359,19 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | CNull oat_rty -> Ptr (cmp_rty oat_rty), Null, []
   | CBool oat_bl -> I1, Const (if oat_bl then 1L else 0L), []
   | CInt oat_i64 -> I64, Const oat_i64, []
-  | CStr str -> 
-    let ll_uid = gensym "str" in 
-    Ptr (Ptr I8), Gid ll_uid, [G (ll_uid, (Ll.Array (String.length str + 1, I8) , GString str))]
+  | CStr str -> cmp_str str
   | CArr (ty, expn_lst) -> failwith ""
   | NewArr (ty, expn) -> failwith ""
   | Id oat_id -> cmp_id c oat_id
-  | Index (expn1, expn2) -> failwith ""
+  | Index (oat_array, oat_index) -> cmp_index c oat_array oat_index
   | Call (oat_fn_name, oat_fn_args) -> cmp_call c oat_fn_name oat_fn_args 
   | Bop (oat_binop, oat_e1, oat_e2) -> cmp_bop c oat_binop oat_e1 oat_e2
   | Uop (oat_unop, oat_e) -> cmp_uop c oat_unop oat_e
-      
+     
+and cmp_str str = 
+  let ll_uid = gensym "str" in 
+  Ptr (Ptr I8), Gid ll_uid, [G (ll_uid, (Ll.Array (String.length str + 1, I8) , GString str))]
+
 and cmp_call (c : Ctxt.t) (oat_fn_name : exp node) (oat_fn_args : exp node list) : Ll.ty * Ll.operand * stream =
   let fn_name = Exp.get_id oat_fn_name in 
   let ll_ty, ll_op = Ctxt.lookup_function fn_name c in 
@@ -387,6 +391,27 @@ and cmp_id (c : Ctxt.t) (oat_id : id) : Ll.ty * Ll.operand * stream =
   let ll_uid = gensym "id" in 
   let ll_stream = [I (ll_uid, Load (ll_ty, ll_op))]
   in 
+    Exp.dptr ll_ty, Id ll_uid, ll_stream
+
+and get_index_loc (c : Ctxt.t) (oat_array : exp node) (oat_index : exp node) : Ll.ty * Ll.operand * stream = 
+  let ll_array_ty, ll_array_op, ll_array_stream = cmp_exp c oat_array in 
+  let ll_index_ty, ll_index_op, ll_index_stream = cmp_exp c oat_index in 
+  let ll_uid = gensym "arr_loc" in 
+  let ll_el_ty = get_arr_el_ty ll_array_ty in
+  let ll_stream = 
+    ll_array_stream
+    >@ ll_index_stream
+    >:: I (ll_uid, Gep (ll_array_ty, ll_array_op, [Const 0L; Const 1L; ll_index_op]))
+  in
+    Ptr ll_el_ty , Id ll_uid, ll_stream
+
+and cmp_index (c : Ctxt.t) (oat_array : exp node) (oat_index : exp node) : Ll.ty * Ll.operand * stream = 
+  let ll_ty, ll_op, ll_stream1 = get_index_loc c oat_array oat_index in 
+  let ll_uid = gensym "index" in 
+  let ll_stream = 
+    ll_stream1 
+    >:: I (ll_uid, Load (ll_ty, ll_op))
+  in
     Exp.dptr ll_ty, Id ll_uid, ll_stream
 
 and cmp_bop (c : Ctxt.t) (oat_binop : binop) (oat_e1 : exp node) (oat_e2 : exp node) : Ll.ty * Ll.operand * stream = 
@@ -493,7 +518,7 @@ and cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream =
   let ll_stream = 
     ll_stream1
     >:: E (ll_uid, Alloca ll_ty)
-    >:: E ("", Store (ll_ty, ll_op, Id ll_uid))
+    >:: I ("", Store (ll_ty, ll_op, Id ll_uid))
   in
   let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
     c, ll_stream
@@ -574,7 +599,7 @@ let gdecl_to_ctxt (c : Ctxt.t) {elt={name;init={elt;_}}} : Ctxt.t =
     | CBool _ -> Ptr I1 
     | CInt _ -> Ptr I64 
     | CStr _ -> Ptr (Ptr I8)
-    | CArr (t, _) -> Ptr (Ptr (Struct [I64; Array (0, cmp_ty t)]))
+    | CArr (t, lst) -> Ptr (Ptr (Struct [I64; Array (List.length lst, cmp_ty t)]))
     | _ -> failwith "invalid gdecl"
   in Ctxt.add c name (t, Gid name)
 
@@ -659,12 +684,20 @@ let rec cmp_gexp c ({elt;}:Ast.exp node) : Ll.gdecl * (Ll.gid * Ll.gdecl) list =
   | CArr (t, lst) -> 
     let arr_len = List.length lst in
     let el_ty = cmp_ty t in 
-    let arr_typ = Ll.Struct [Ll.I64; Ll.Array (arr_len, el_ty)] 
+    let arr_typ = Ll.Struct [Ll.I64; Ll.Array (arr_len, el_ty)] in
+    let elts, decl_lst = List.fold_left (fun (acc1, acc2) x -> 
+      let gdecl, lst = cmp_gexp c x in 
+      match t with 
+      | TRef (RArray t') -> 
+        let gid = gensym "glbl" in
+        acc1 @ [cmp_rty @@ RArray t', GGid gid], acc2 @ lst @ [gid, gdecl] 
+      | _ -> acc1 @ [gdecl], acc2 @ lst 
+      ) ([], []) lst 
     in 
       (arr_typ, GStruct [
       (Ll.I64, GInt (Int64.of_int @@ arr_len))
-    ; (Ll.Array (arr_len, arr_typ), GArray (List.map (fun x -> let (ty, ginit), _ = cmp_gexp c x in ty, ginit) lst))]
-    ), []
+    ; (Ll.Array (arr_len, el_ty), GArray elts)]
+    ), decl_lst
   | _ -> failwith "cmp_gexp: invalid element"
 
 

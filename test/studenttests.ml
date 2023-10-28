@@ -116,6 +116,14 @@ let easy_string_tests = [
 ; ("hw4programs/my_tests/string_5.oat", "", "10")
 ]
 
+let easy_index_tests = [
+  (* Simple indexing into globals, diff types *)
+  ("hw4programs/my_tests/index_1.oat", "", "1")
+; ("hw4programs/my_tests/index_2.oat", "", "2")
+; ("hw4programs/my_tests/index_3.oat", "", "10")
+; ("hw4programs/my_tests/index_4.oat", "", "10")
+]
+
 let provided_tests : suite = [
   Test (">>> easy ret tests", executed_oat_file easy_ret_tests);
   Test (">>> easy call tests", executed_oat_file easy_call_tests);
@@ -125,4 +133,5 @@ let provided_tests : suite = [
   Test (">>> easy while tests", executed_oat_file easy_while_tests);
   Test (">>> easy for tests", executed_oat_file easy_for_tests);
   Test (">>> easy string tests", executed_oat_file easy_string_tests);
+  Test (">>> easy index tests", executed_oat_file easy_index_tests);
 ] 

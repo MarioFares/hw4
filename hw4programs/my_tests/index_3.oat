@@ -1,0 +1,12 @@
+global arr = new int[]{1, 2, 3, 4};
+
+int program(int argc, string[] argv) {
+    var x = arr[0];
+    var y = arr[1];
+    var z = arr[2];
+    var a = arr[3];
+
+    var sum = x + y + z + a;
+
+    return sum;
+}

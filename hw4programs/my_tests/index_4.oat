@@ -1,0 +1,16 @@
+global arr = new bool[]{true, false, true, false};
+
+int program(int argc, string[] argv) {
+    var x = arr[0];
+    var y = 0;
+    if (x) {
+        y = 10;
+    }
+
+    x = arr[1];
+    if (x) {
+        y = 20;
+    }
+
+    return y;
+}
