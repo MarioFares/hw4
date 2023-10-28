@@ -360,65 +360,73 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | CStr str -> failwith ""
   | CArr (ty, expn_lst) -> failwith ""
   | NewArr (ty, expn) -> failwith ""
-  | Id oat_id -> 
-    let ll_ty, ll_op = Ctxt.lookup oat_id c in 
-    let ll_uid = gensym "id" in 
-    let ll_stream = [I (ll_uid, Load (ll_ty, ll_op))]
-    in 
-      Exp.dptr ll_ty, Id ll_uid, ll_stream
+  | Id oat_id -> cmp_id c oat_id
   | Index (expn1, expn2) -> failwith ""
-  | Call (oat_fn_name, oat_fn_args) -> 
-    let fn_name = Exp.get_id oat_fn_name in 
-    let ll_ty, ll_op = Ctxt.lookup_function fn_name c in 
-    let ll_frety = Exp.llfty_to_frety ll_ty in 
-    let ll_args = List.map (cmp_exp c) oat_fn_args in 
-    let ll_args' = List.map (fun (ty, op, _) -> ty, op) ll_args in
-    let ll_arg_streams = List.map (fun (_, _, stream) -> stream) ll_args in
-    let ll_uid = gensym "fn_retval" in 
-    let ll_stream = 
-      List.flatten ll_arg_streams 
-      >:: (I (ll_uid, Call (ll_frety, ll_op, ll_args'))) 
-    in
-      ll_frety, Id ll_uid, ll_stream 
-  | Bop (oat_binop, oat_e1, oat_e2) -> 
-    let _, ll_op1, ll_stream1 = cmp_exp c oat_e1 in 
-    let _, ll_op2, ll_stream2 = cmp_exp c oat_e2 in 
-    let oat_ty1, oat_ty2, oat_ty = typ_of_binop oat_binop in  
-    let ll_ty = cmp_ty oat_ty in  
-    let ll_uid = gensym "binop_temp" in 
-    let ll_stream = begin
-      match oat_ty1, oat_ty2, oat_ty with
-      | TInt, TInt, TInt
-      | TBool, TBool, TBool -> 
-        let ll_binop = Exp.oat_to_llbinop oat_binop in 
-        I (ll_uid, Binop (ll_binop, ll_ty, ll_op1, ll_op2))
-      | TInt, TInt, TBool ->
-        let ll_cnd = Exp.oatbinop_to_cnd oat_binop in 
-        I (ll_uid, Icmp (ll_cnd, cmp_ty TInt, ll_op1, ll_op2))
-      | _ -> failwith "invalid types for binops"
-    end in
-    let ll_stream = 
-      ll_stream1
-      >@ ll_stream2 
-      >:: ll_stream
-    in 
-      ll_ty, Id ll_uid, ll_stream  
-  | Uop (oat_unop, oat_e) ->
-    let _, ll_op, ll_stream1 = cmp_exp c oat_e in
-    let _, oat_ty = typ_of_unop oat_unop in 
-    let ll_ty = cmp_ty oat_ty in 
-    let ll_uid = gensym "unop_temp" in 
-    let ll_stream2 = begin
-      match oat_unop with 
-      | Neg    -> [I (ll_uid, Binop (Ll.Mul, ll_ty, ll_op, Const (-1L)))]
-      | Bitnot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (-1L)))]
-      | Lognot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (1L)))]
-    end in
-    let ll_stream = 
-      ll_stream1
-      >@ ll_stream2 
-    in 
-      ll_ty, Id ll_uid, ll_stream  
+  | Call (oat_fn_name, oat_fn_args) -> cmp_call c oat_fn_name oat_fn_args 
+  | Bop (oat_binop, oat_e1, oat_e2) -> cmp_bop c oat_binop oat_e1 oat_e2
+  | Uop (oat_unop, oat_e) -> cmp_uop c oat_unop oat_e
+      
+and cmp_call (c : Ctxt.t) (oat_fn_name : exp node) (oat_fn_args : exp node list) : Ll.ty * Ll.operand * stream =
+  let fn_name = Exp.get_id oat_fn_name in 
+  let ll_ty, ll_op = Ctxt.lookup_function fn_name c in 
+  let ll_frety = Exp.llfty_to_frety ll_ty in 
+  let ll_args = List.map (cmp_exp c) oat_fn_args in 
+  let ll_args' = List.map (fun (ty, op, _) -> ty, op) ll_args in
+  let ll_arg_streams = List.map (fun (_, _, stream) -> stream) ll_args in
+  let ll_uid = gensym "fn_retval" in 
+  let ll_stream = 
+    List.flatten ll_arg_streams 
+    >:: (I (ll_uid, Call (ll_frety, ll_op, ll_args'))) 
+  in
+    ll_frety, Id ll_uid, ll_stream
+
+and cmp_id (c : Ctxt.t) (oat_id : id) : Ll.ty * Ll.operand * stream = 
+  let ll_ty, ll_op = Ctxt.lookup oat_id c in 
+  let ll_uid = gensym "id" in 
+  let ll_stream = [I (ll_uid, Load (ll_ty, ll_op))]
+  in 
+    Exp.dptr ll_ty, Id ll_uid, ll_stream
+
+and cmp_bop (c : Ctxt.t) (oat_binop : binop) (oat_e1 : exp node) (oat_e2 : exp node) : Ll.ty * Ll.operand * stream = 
+  let _, ll_op1, ll_stream1 = cmp_exp c oat_e1 in 
+  let _, ll_op2, ll_stream2 = cmp_exp c oat_e2 in 
+  let oat_ty1, oat_ty2, oat_ty = typ_of_binop oat_binop in  
+  let ll_ty = cmp_ty oat_ty in  
+  let ll_uid = gensym "binop_temp" in 
+  let ll_stream = begin
+    match oat_ty1, oat_ty2, oat_ty with
+    | TInt, TInt, TInt
+    | TBool, TBool, TBool -> 
+      let ll_binop = Exp.oat_to_llbinop oat_binop in 
+      I (ll_uid, Binop (ll_binop, ll_ty, ll_op1, ll_op2))
+    | TInt, TInt, TBool ->
+      let ll_cnd = Exp.oatbinop_to_cnd oat_binop in 
+      I (ll_uid, Icmp (ll_cnd, cmp_ty TInt, ll_op1, ll_op2))
+    | _ -> failwith "invalid types for binops"
+  end in
+  let ll_stream = 
+    ll_stream1
+    >@ ll_stream2 
+    >:: ll_stream
+  in 
+    ll_ty, Id ll_uid, ll_stream  
+
+and cmp_uop (c : Ctxt.t) (oat_unop : unop) (oat_e : exp node) : Ll.ty * Ll.operand * stream = 
+  let _, ll_op, ll_stream1 = cmp_exp c oat_e in
+  let _, oat_ty = typ_of_unop oat_unop in 
+  let ll_ty = cmp_ty oat_ty in 
+  let ll_uid = gensym "unop_temp" in 
+  let ll_stream2 = begin
+    match oat_unop with 
+    | Neg    -> [I (ll_uid, Binop (Ll.Mul, ll_ty, ll_op, Const (-1L)))]
+    | Bitnot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (-1L)))]
+    | Lognot -> [I (ll_uid, Binop (Ll.Xor, ll_ty, ll_op, Const (1L)))]
+  end in
+  let ll_stream = 
+    ll_stream1
+    >@ ll_stream2 
+  in 
+    ll_ty, Id ll_uid, ll_stream 
 
 (* Compile a statement in context c with return typ rt. Return a new context, 
    possibly extended with new local bindings, and the instruction stream
@@ -447,104 +455,15 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
 
  *)
 
-module Stmt = struct 
-  (* Compile a return statement. *)
-  let cmp_ret (c : Ctxt.t) (en_opt : exp node option) : Ctxt.t * stream = 
-    match en_opt with 
-    | None -> c, [T (Ret (Void, None))]
-    | Some oat_e -> 
-      let ll_ty, ll_op, ll_stream1 = cmp_exp c oat_e in 
-      let ll_stream = ll_stream1 >@ [T (Ret (ll_ty, Some ll_op))] 
-      in 
-        c, ll_stream
-
-
-  (* Compile a declaration (starts with var). *)
-  let cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream = 
-    let ll_ty, ll_op, ll_stream1 = cmp_exp c elt in 
-    let ll_uid = gensym "decl" in
-    let ll_stream = 
-      ll_stream1
-      >:: E (ll_uid, Alloca ll_ty)
-      >:: E ("", Store (ll_ty, ll_op, Id ll_uid))
-    in
-    let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
-      c, ll_stream
-
-  (* Compile an assignment, for a var or for indexed array. *)
-  let cmp_assn (c : Ctxt.t) ({elt=lhs} : exp node) (e : exp node) : Ctxt.t * stream =
-    let ll_e_ty, ll_e_op, ll_e_stream = cmp_exp c e in
-    match lhs with 
-    | Id oat_id -> 
-      let ll_id_ty, ll_id_op = Ctxt.lookup oat_id c in
-      let ll_stream = 
-        ll_e_stream 
-        >:: I ("", Store (ll_e_ty, ll_e_op, ll_id_op)) 
-      in
-        c, ll_stream
-    | Index _ -> failwith "index assn not implemented"
-    | _ -> failwith "improper lhs"
-
-end
-
 let rec cmp_stmt (c:Ctxt.t) (rt:Ll.ty) ({elt=stmt}:Ast.stmt node) : Ctxt.t * stream =
   match stmt with 
-  | Assn (e1, e2) -> Stmt.cmp_assn c e1 e2
-  | Decl vdecl -> Stmt.cmp_decl c vdecl
-  | Ret en_opt -> Stmt.cmp_ret c en_opt
-  | SCall (e, lst) -> failwith ""
-  | If (oat_exp, oat_true_block,  oat_else_block) -> 
-    let _, ll_op, ll_stream1 = cmp_exp c oat_exp in 
-    let c, ll_true_stream = cmp_block c Void oat_true_block in
-    let c, ll_else_stream = cmp_block c Void oat_else_block in
-    let ll_uid = gensym "cmp_res" in 
-    let ll_true_id = gensym "true_block" in 
-    let ll_else_id = gensym "else_block" in
-    let ll_end_id = gensym "if_end" in 
-    let ll_stream = 
-      ll_stream1
-      >:: I (ll_uid, Icmp (Ll.Eq, Ll.I1, ll_op, Const 1L))
-      >:: T (Cbr (Id ll_uid, ll_true_id, ll_else_id))
-      >:: L ll_true_id
-      >@ ll_true_stream
-      >:: T (Br ll_end_id)
-      >:: L ll_else_id
-      >@ ll_else_stream
-      >:: T (Br ll_end_id)
-      >:: L ll_end_id 
-    in
-      c, ll_stream
-  | For (vdecl_lst, exp_opt, stmt_opt, stmt_lst) -> 
-    let oat_cnd = match exp_opt with None -> no_loc (CBool true) | Some e -> e in 
-    let oat_incs = match stmt_opt with None -> [] | Some stmt -> [stmt] in 
-    let oat_while_loop = 
-      List.map (fun x -> no_loc @@ Decl x) vdecl_lst 
-      @ [
-        no_loc @@ While (oat_cnd, stmt_lst @ oat_incs) 
-      ]
-    in
-      cmp_block c Ll.Void oat_while_loop
-  | While (oat_exp, oat_block) -> 
-    let _, ll_op, ll_stream1 = cmp_exp c oat_exp in
-    let c, ll_body_stream = cmp_block c Ll.Void oat_block in 
-    let ll_uid = gensym "cmp_res" in 
-    let ll_entry_uid = gensym "while_start" in
-    let ll_body_uid = gensym "while_body" in
-    let ll_exit_uid = gensym "while_end" in 
-    let ll_stream =
-      []
-      >:: T (Br ll_entry_uid)
-      >:: L ll_entry_uid 
-      >@ ll_stream1
-      >:: I (ll_uid, Icmp (Ll.Eq, Ll.I1, ll_op, Const 1L))
-      >:: T (Cbr (Id ll_uid, ll_body_uid, ll_exit_uid))
-      >:: L ll_body_uid
-      >@ ll_body_stream
-      >:: T (Br ll_entry_uid)
-      >:: L ll_exit_uid
-    in
-      c, ll_stream
-
+  | Assn (e1, e2) -> cmp_assn c e1 e2
+  | Decl vdecl -> cmp_decl c vdecl
+  | Ret en_opt -> cmp_ret c en_opt
+  | SCall (oat_fn_name, oat_fn_args) -> cmp_scall c oat_fn_name oat_fn_args
+  | If (oat_exp, oat_true_block,  oat_else_block) -> cmp_if c oat_exp oat_true_block oat_else_block
+  | For (vdecl_lst, exp_opt, stmt_opt, stmt_lst) -> cmp_for c vdecl_lst exp_opt stmt_opt stmt_lst
+  | While (oat_exp, oat_block) -> cmp_while c oat_exp oat_block
 
 (* Compile a series of statements *)
 and cmp_block (c:Ctxt.t) (rt:Ll.ty) (stmts:Ast.block) : Ctxt.t * stream =
@@ -552,6 +471,99 @@ and cmp_block (c:Ctxt.t) (rt:Ll.ty) (stmts:Ast.block) : Ctxt.t * stream =
       let c, stmt_code = cmp_stmt c rt s in
       c, code >@ stmt_code
     ) (c,[]) stmts
+
+and cmp_assn (c : Ctxt.t) ({elt=lhs} : exp node) (e : exp node) : Ctxt.t * stream =
+  let ll_e_ty, ll_e_op, ll_e_stream = cmp_exp c e in
+  match lhs with 
+  | Id oat_id -> 
+    let ll_id_ty, ll_id_op = Ctxt.lookup oat_id c in
+    let ll_stream = 
+      ll_e_stream 
+      >:: I ("", Store (ll_e_ty, ll_e_op, ll_id_op)) 
+    in
+      c, ll_stream
+  | Index _ -> failwith "index assn not implemented"
+  | _ -> failwith "improper lhs"
+
+and cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream = 
+  let ll_ty, ll_op, ll_stream1 = cmp_exp c elt in 
+  let ll_uid = gensym "decl" in
+  let ll_stream = 
+    ll_stream1
+    >:: E (ll_uid, Alloca ll_ty)
+    >:: E ("", Store (ll_ty, ll_op, Id ll_uid))
+  in
+  let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
+    c, ll_stream
+    
+and cmp_ret (c : Ctxt.t) (en_opt : exp node option) : Ctxt.t * stream = 
+  match en_opt with 
+  | None -> c, [T (Ret (Void, None))]
+  | Some oat_e -> 
+    let ll_ty, ll_op, ll_stream1 = cmp_exp c oat_e in 
+    let ll_stream = ll_stream1 >@ [T (Ret (ll_ty, Some ll_op))] 
+    in 
+      c, ll_stream
+
+and cmp_scall (c : Ctxt.t) (oat_fn_name : exp node) (oat_fn_args : exp node list) : Ctxt.t * stream = 
+  let _, _, ll_stream = cmp_exp c (no_loc @@ Call (oat_fn_name, oat_fn_args)) 
+  in
+    c, ll_stream
+
+and cmp_if (c : Ctxt.t) (oat_exp : exp node) (oat_true_block : Ast.block) (oat_else_block : Ast.block) : Ctxt.t * stream = 
+  let _, ll_op, ll_stream1 = cmp_exp c oat_exp in 
+  let c, ll_true_stream = cmp_block c Void oat_true_block in
+  let c, ll_else_stream = cmp_block c Void oat_else_block in
+  let ll_uid = gensym "cmp_res" in 
+  let ll_true_id = gensym "true_block" in 
+  let ll_else_id = gensym "else_block" in
+  let ll_end_id = gensym "if_end" in 
+  let ll_stream = 
+    ll_stream1
+    >:: I (ll_uid, Icmp (Ll.Eq, Ll.I1, ll_op, Const 1L))
+    >:: T (Cbr (Id ll_uid, ll_true_id, ll_else_id))
+    >:: L ll_true_id
+    >@ ll_true_stream
+    >:: T (Br ll_end_id)
+    >:: L ll_else_id
+    >@ ll_else_stream
+    >:: T (Br ll_end_id)
+    >:: L ll_end_id 
+  in
+    c, ll_stream
+
+and cmp_for (c : Ctxt.t) (vdecl_lst : vdecl list) (exp_opt : exp node option) (stmt_opt : stmt node option) (stmt_lst : stmt node list) : Ctxt.t * stream = 
+  let oat_cnd = match exp_opt with None -> no_loc (CBool true) | Some e -> e in 
+  let oat_incs = match stmt_opt with None -> [] | Some stmt -> [stmt] in 
+  let oat_while_loop = 
+    List.map (fun x -> no_loc @@ Decl x) vdecl_lst 
+    @ [
+      no_loc @@ While (oat_cnd, stmt_lst @ oat_incs) 
+    ]
+  in
+    cmp_block c Ll.Void oat_while_loop
+
+and cmp_while (c : Ctxt.t) (oat_exp : exp node) (oat_block : Ast.block) : Ctxt.t * stream = 
+  let _, ll_op, ll_stream1 = cmp_exp c oat_exp in
+  let c, ll_body_stream = cmp_block c Ll.Void oat_block in 
+  let ll_uid = gensym "cmp_res" in 
+  let ll_entry_uid = gensym "while_start" in
+  let ll_body_uid = gensym "while_body" in
+  let ll_exit_uid = gensym "while_end" in 
+  let ll_stream =
+    []
+    >:: T (Br ll_entry_uid)
+    >:: L ll_entry_uid 
+    >@ ll_stream1
+    >:: I (ll_uid, Icmp (Ll.Eq, Ll.I1, ll_op, Const 1L))
+    >:: T (Cbr (Id ll_uid, ll_body_uid, ll_exit_uid))
+    >:: L ll_body_uid
+    >@ ll_body_stream
+    >:: T (Br ll_entry_uid)
+    >:: L ll_exit_uid
+  in
+    c, ll_stream
+
 
 let gdecl_to_ctxt (c : Ctxt.t) {elt={name;init={elt;_}}} : Ctxt.t = 
   let t = 
