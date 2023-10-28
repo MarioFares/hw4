@@ -93,6 +93,27 @@ let easy_for_tests = [
 ; ("hw4programs/my_tests/for_3.oat", "", "5")
   (* Multiple decls for loops *)
 ; ("hw4programs/my_tests/for_4.oat", "", "19")
+  (* No condition *)
+; ("hw4programs/my_tests/for_5.oat", "", "10")
+; ("hw4programs/my_tests/for_6.oat", "", "10")
+  (* No decls *)
+; ("hw4programs/my_tests/for_7.oat", "", "10")
+; ("hw4programs/my_tests/for_8.oat", "", "0")
+  (* No statement *)
+; ("hw4programs/my_tests/for_9.oat", "", "10")
+; ("hw4programs/my_tests/for_10.oat", "", "0")
+  (* Infinite for loops *)
+; ("hw4programs/my_tests/for_11.oat", "", "10")
+; ("hw4programs/my_tests/for_12.oat", "", "0")
+]
+
+let easy_string_tests = [
+  (* Testing with built-ins *)
+  ("hw4programs/my_tests/string_1.oat", "", "0")
+; ("hw4programs/my_tests/string_2.oat", "", "5")
+; ("hw4programs/my_tests/string_3.oat", "", "10")
+; ("hw4programs/my_tests/string_4.oat", "", "2")
+; ("hw4programs/my_tests/string_5.oat", "", "10")
 ]
 
 let provided_tests : suite = [
@@ -103,4 +124,5 @@ let provided_tests : suite = [
   Test (">>> easy if tests", executed_oat_file easy_if_tests);
   Test (">>> easy while tests", executed_oat_file easy_while_tests);
   Test (">>> easy for tests", executed_oat_file easy_for_tests);
+  Test (">>> easy string tests", executed_oat_file easy_string_tests);
 ] 

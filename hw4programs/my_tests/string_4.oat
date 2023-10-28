@@ -1,0 +1,7 @@
+int program(int argc, string[] argv) {
+    var x = 12;
+    var str = string_of_int(x);
+    x = length_of_string(str);
+
+    return x;
+}

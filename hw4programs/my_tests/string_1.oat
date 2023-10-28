@@ -1,0 +1,11 @@
+int program(int argc, string[] argv) {
+    var str1 = "string 1";
+    var str2 = "string 2";
+    var str3 = "string 3";
+    var str4 = "string 4";
+    var str5 = "string 5";
+    var str6 = "string 6";
+    var str7 = "string 7";
+
+    return 0;
+}
