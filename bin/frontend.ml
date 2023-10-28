@@ -636,13 +636,21 @@ let cmp_fdecl (c:Ctxt.t) ({elt}:Ast.fdecl node) : Ll.fdecl * (Ll.gid * Ll.gdecl)
    - OAT arrays are always handled via pointers. A global array of arrays will
      be an array of pointers to arrays emitted as additional global declarations.
 *)
-let rec cmp_gexp c ({elt;loc}:Ast.exp node) : Ll.gdecl * (Ll.gid * Ll.gdecl) list = 
+let rec cmp_gexp c ({elt;}:Ast.exp node) : Ll.gdecl * (Ll.gid * Ll.gdecl) list = 
   match elt with 
-  | CNull rty -> failwith "cnull not implemented" 
-  | CBool b -> failwith "cbool not implemented" 
-  | CInt i -> failwith "cint not implemented"
-  | CStr s -> failwith "cstr not implemented"
-  | CArr (t, lst) -> failwith "carr not implemented"
+  | CNull rty -> (cmp_ty @@ Ast.TRef rty, GNull), []
+  | CBool b -> (Ll.I1, GInt (if b then 1L else 0L)), [] 
+  | CInt i -> (Ll.I64, GInt i), []
+  | CStr s -> (Ll.Array (String.length s + 1, I8), GString s), []
+  | CArr (t, lst) -> 
+    let arr_len = List.length lst in
+    let el_ty = cmp_ty t in 
+    let arr_typ = Ll.Struct [Ll.I64; Ll.Array (arr_len, el_ty)] 
+    in 
+      (arr_typ, GStruct [
+      (Ll.I64, GInt (Int64.of_int @@ arr_len))
+    ; (Ll.Array (arr_len, arr_typ), GArray (List.map (fun x -> let (ty, ginit), _ = cmp_gexp c x in ty, ginit) lst))]
+    ), []
   | _ -> failwith "cmp_gexp: invalid element"
 
 
