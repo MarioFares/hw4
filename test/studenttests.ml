@@ -122,6 +122,14 @@ let easy_index_tests = [
 ; ("hw4programs/my_tests/index_2.oat", "", "2")
 ; ("hw4programs/my_tests/index_3.oat", "", "10")
 ; ("hw4programs/my_tests/index_4.oat", "", "10")
+; ("hw4programs/my_tests/index_5.oat", "", "10")
+; ("hw4programs/my_tests/index_6.oat", "", "10")
+  (* e1[e2] -> Complex e2 *)
+; ("hw4programs/my_tests/index_7.oat", "", "2")
+; ("hw4programs/my_tests/index_8.oat", "", "3")
+; ("hw4programs/my_tests/index_9.oat", "", "20")
+; ("hw4programs/my_tests/index_10.oat", "", "0")
+; ("hw4programs/my_tests/index_11.oat", "", "2")
 ]
 
 let provided_tests : suite = [

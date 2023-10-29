@@ -1,0 +1,8 @@
+global arr1 = new int[]{1, 2, 3, 4};
+global arr2 = new int[]{10, 20, 30, 40};
+
+int program(int argc, string[] argv) {
+    var x = arr2[arr1[0]];
+
+    return x;
+}
