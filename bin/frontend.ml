@@ -513,7 +513,14 @@ and cmp_assn (c : Ctxt.t) ({elt=lhs} : exp node) (e : exp node) : Ctxt.t * strea
       >:: I ("", Store (ll_e_ty, ll_e_op, ll_id_op)) 
     in
       c, ll_stream
-  | Index _ -> failwith "index assn not implemented"
+  | Index (oat_arr, oat_index) -> 
+    let ll_ty, ll_op, ll_stream1 = get_index_loc c oat_arr oat_index in
+    let ll_stream = 
+      ll_e_stream
+      >@ ll_stream1
+      >:: I ("", Store (ll_e_ty, ll_e_op, ll_op)) 
+    in  
+      c, ll_stream
   | _ -> failwith "improper lhs"
 
 and cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream = 

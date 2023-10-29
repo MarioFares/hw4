@@ -116,6 +116,7 @@ let easy_string_tests = [
 ; ("hw4programs/my_tests/string_5.oat", "", "10")
 ]
 
+(* Relies only on global arrays *)
 let easy_index_tests = [
   (* Simple indexing into globals, diff types *)
   ("hw4programs/my_tests/index_1.oat", "", "1")
@@ -132,6 +133,16 @@ let easy_index_tests = [
 ; ("hw4programs/my_tests/index_11.oat", "", "2")
 ]
 
+(* Assignment but for arrays using indices. *)
+(* Uses only global arrays. *)
+let easy_indassign_test = [
+  ("hw4programs/my_tests/indassign_1.oat", "", "30")
+; ("hw4programs/my_tests/indassign_2.oat", "", "0")
+; ("hw4programs/my_tests/indassign_3.oat", "", "40")
+; ("hw4programs/my_tests/indassign_4.oat", "", "4")
+; ("hw4programs/my_tests/indassign_5.oat", "", "50")
+]
+
 let provided_tests : suite = [
   Test (">>> easy ret tests", executed_oat_file easy_ret_tests);
   Test (">>> easy call tests", executed_oat_file easy_call_tests);
@@ -142,4 +153,5 @@ let provided_tests : suite = [
   Test (">>> easy for tests", executed_oat_file easy_for_tests);
   Test (">>> easy string tests", executed_oat_file easy_string_tests);
   Test (">>> easy index tests", executed_oat_file easy_index_tests);
+  Test (">>> easy index assign tests", executed_oat_file easy_indassign_test);
 ] 

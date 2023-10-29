@@ -1,0 +1,7 @@
+global arr = new int[]{1, 2, 3, 4};
+
+int program(int argc, string[] argv) {
+    arr[2] = 30; 
+
+    return arr[2];
+}
