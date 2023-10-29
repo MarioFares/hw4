@@ -356,9 +356,9 @@ end
 
 let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * stream =
   match exp with 
-  | CNull oat_rty -> Ptr (cmp_rty oat_rty), Null, []
-  | CBool oat_bl -> I1, Const (if oat_bl then 1L else 0L), []
-  | CInt oat_i64 -> I64, Const oat_i64, []
+  | CNull oat_rty -> cmp_ty @@ TRef oat_rty, Null, []
+  | CBool oat_bl -> cmp_ty TBool, Const (if oat_bl then 1L else 0L), []
+  | CInt oat_i64 -> cmp_ty TInt, Const oat_i64, []
   | CStr str -> cmp_str str
   | CArr (ty, expn_lst) -> failwith ""
   | NewArr (ty, expn) -> failwith ""
@@ -369,8 +369,12 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | Uop (oat_unop, oat_e) -> cmp_uop c oat_unop oat_e
      
 and cmp_str str = 
-  let ll_uid = gensym "str" in 
-  Ptr (Ptr I8), Gid ll_uid, [G (ll_uid, (Ll.Array (String.length str + 1, I8) , GString str))]
+  let ll_uid1 = gensym "str" in 
+  let ll_stream = 
+    []
+    >:: G (ll_uid1, (Array (String.length str + 1, I8), GString str))
+  in
+    Ptr (Ptr I8), Gid ll_uid1, ll_stream
 
 and cmp_call (c : Ctxt.t) (oat_fn_name : exp node) (oat_fn_args : exp node list) : Ll.ty * Ll.operand * stream =
   let fn_name = Exp.get_id oat_fn_name in 
@@ -518,9 +522,9 @@ and cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream =
   let ll_stream = 
     ll_stream1
     >:: E (ll_uid, Alloca ll_ty)
-    >:: I ("", Store (ll_ty, ll_op, Id ll_uid))
-  in
-  let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) in 
+    >:: I ("", Store (ll_ty, ll_op, Id ll_uid)) in
+  let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) 
+  in 
     c, ll_stream
     
 and cmp_ret (c : Ctxt.t) (en_opt : exp node option) : Ctxt.t * stream = 
@@ -596,12 +600,13 @@ let gdecl_to_ctxt (c : Ctxt.t) {elt={name;init={elt;_}}} : Ctxt.t =
   let t = 
     match elt with 
     | CNull rty -> Ptr (cmp_rty rty) 
-    | CBool _ -> Ptr I1 
-    | CInt _ -> Ptr I64 
-    | CStr _ -> Ptr (Ptr I8)
-    | CArr (t, lst) -> Ptr (Ptr (Struct [I64; Array (List.length lst, cmp_ty t)]))
+    | CBool _ -> Ptr (cmp_ty TBool) 
+    | CInt _ -> Ptr (cmp_ty TInt)
+    | CStr str -> Ptr (Ptr I8)
+    | CArr (t, lst) -> Ptr (cmp_ty @@ TRef (RArray t))
     | _ -> failwith "invalid gdecl"
-  in Ctxt.add c name (t, Gid name)
+  in 
+    Ctxt.add c name (t, Gid name)
 
 let fdecl_to_ctxt c {elt={frtyp;fname;args}} = 
   let ft = TRef (RFun (List.map fst args, frtyp)) in 
@@ -654,7 +659,8 @@ let cmp_fdecl (c:Ctxt.t) ({elt}:Ast.fdecl node) : Ll.fdecl * (Ll.gid * Ll.gdecl)
         >:: E (id', Alloca ty')
         >:: E ("", Store (ty', Id id, Id id')) in
       let c = Ctxt.add c id (Ptr ty', Id id')
-        in c, stream
+      in 
+        c, stream
     ) (c, []) args
   in    
   let c, body_stream = cmp_block c f_rty body in
@@ -678,13 +684,14 @@ let cmp_fdecl (c:Ctxt.t) ({elt}:Ast.fdecl node) : Ll.fdecl * (Ll.gid * Ll.gdecl)
 let rec cmp_gexp c ({elt;}:Ast.exp node) : Ll.gdecl * (Ll.gid * Ll.gdecl) list = 
   match elt with 
   | CNull rty -> (cmp_ty @@ Ast.TRef rty, GNull), []
-  | CBool b -> (Ll.I1, GInt (if b then 1L else 0L)), [] 
-  | CInt i -> (Ll.I64, GInt i), []
+  | CBool b -> (cmp_ty TBool, GInt (if b then 1L else 0L)), [] 
+  | CInt i -> (cmp_ty TInt, GInt i), []
   | CStr s -> (Ll.Array (String.length s + 1, I8), GString s), []
   | CArr (t, lst) -> 
     let arr_len = List.length lst in
     let el_ty = cmp_ty t in 
-    let arr_typ = Ll.Struct [Ll.I64; Ll.Array (arr_len, el_ty)] in
+    let parent_arr_typ = cmp_ty @@ TRef (RArray t) in
+    let actual_arr_typ = Struct [I64; Array (arr_len, el_ty)]  in
     let elts, decl_lst = List.fold_left (fun (acc1, acc2) x -> 
       let gdecl, lst = cmp_gexp c x in 
       match t with 
@@ -694,10 +701,17 @@ let rec cmp_gexp c ({elt;}:Ast.exp node) : Ll.gdecl * (Ll.gid * Ll.gdecl) list =
       | _ -> acc1 @ [gdecl], acc2 @ lst 
       ) ([], []) lst 
     in 
-      (arr_typ, GStruct [
-      (Ll.I64, GInt (Int64.of_int @@ arr_len))
-    ; (Ll.Array (arr_len, el_ty), GArray elts)]
-    ), decl_lst
+    let ll_arr_id = gensym "global_arr" in 
+    let bitcast = parent_arr_typ, GBitcast (Ptr actual_arr_typ, GGid ll_arr_id, parent_arr_typ) in 
+    let ll_actual_array =
+      ll_arr_id,  
+      (actual_arr_typ, GStruct [
+        (Ll.I64, GInt (Int64.of_int @@ arr_len))
+      ; (Ll.Array (arr_len, el_ty), GArray elts)
+      ])
+    in 
+      bitcast, ll_actual_array :: decl_lst
+    
   | _ -> failwith "cmp_gexp: invalid element"
 
 
