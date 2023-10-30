@@ -135,12 +135,31 @@ let easy_index_tests = [
 
 (* Assignment but for arrays using indices. *)
 (* Uses only global arrays. *)
-let easy_indassign_test = [
+let easy_indassign_tests = [
   ("hw4programs/my_tests/indassign_1.oat", "", "30")
 ; ("hw4programs/my_tests/indassign_2.oat", "", "0")
 ; ("hw4programs/my_tests/indassign_3.oat", "", "40")
 ; ("hw4programs/my_tests/indassign_4.oat", "", "4")
 ; ("hw4programs/my_tests/indassign_5.oat", "", "50")
+]
+
+let easy_new_arr_tests = [
+  ("hw4programs/my_tests/newarr_1.oat", "", "1")
+; ("hw4programs/my_tests/newarr_2.oat", "", "0")
+; ("hw4programs/my_tests/newarr_3.oat", "", "0")
+; ("hw4programs/my_tests/newarr_4.oat", "", "1")
+]
+
+let easy_carr_tests = [
+  ("hw4programs/my_tests/carr_1.oat", "", "2")
+]
+
+let global_string_tests = [
+  (* Testing with built-ins *)
+  ("hw4programs/my_tests/glbl_string_1.oat", "", "0")
+; ("hw4programs/my_tests/glbl_string_2.oat", "", "5")
+; ("hw4programs/my_tests/glbl_string_3.oat", "", "10")
+; ("hw4programs/my_tests/glbl_string_4.oat", "", "10")
 ]
 
 let provided_tests : suite = [
@@ -153,5 +172,8 @@ let provided_tests : suite = [
   Test (">>> easy for tests", executed_oat_file easy_for_tests);
   Test (">>> easy string tests", executed_oat_file easy_string_tests);
   Test (">>> easy index tests", executed_oat_file easy_index_tests);
-  Test (">>> easy index assign tests", executed_oat_file easy_indassign_test);
+  Test (">>> easy index assign tests", executed_oat_file easy_indassign_tests);
+  Test (">>> easy new array tests", executed_oat_file easy_new_arr_tests);
+  Test (">>> easy arr tests", executed_oat_file easy_carr_tests);
+  Test (">>> global string tests", executed_oat_file global_string_tests);
 ] 

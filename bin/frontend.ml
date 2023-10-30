@@ -129,7 +129,6 @@ and cmp_ret_ty : Ast.ret_ty -> Ll.ty = function
 and cmp_fty (ts, r) : Ll.fty =
   List.map cmp_ty ts, cmp_ret_ty r
 
-
 let typ_of_binop : Ast.binop -> Ast.ty * Ast.ty * Ast.ty = function
   | Add | Mul | Sub | Shl | Shr | Sar | IAnd | IOr -> (TInt, TInt, TInt)
   | Eq | Neq | Lt | Lte | Gt | Gte -> (TInt, TInt, TBool)
@@ -360,21 +359,66 @@ let rec cmp_exp (c:Ctxt.t) ({elt=exp}:Ast.exp node) : Ll.ty * Ll.operand * strea
   | CBool oat_bl -> cmp_ty TBool, Const (if oat_bl then 1L else 0L), []
   | CInt oat_i64 -> cmp_ty TInt, Const oat_i64, []
   | CStr str -> cmp_str str
-  | CArr (ty, expn_lst) -> failwith ""
-  | NewArr (ty, expn) -> failwith ""
+  | CArr (oat_ty, oat_e_lst) -> cmp_carr c oat_ty oat_e_lst
+  | NewArr (oat_ty, oat_e) -> cmp_new_arr c oat_ty oat_e
   | Id oat_id -> cmp_id c oat_id
   | Index (oat_array, oat_index) -> cmp_index c oat_array oat_index
   | Call (oat_fn_name, oat_fn_args) -> cmp_call c oat_fn_name oat_fn_args 
   | Bop (oat_binop, oat_e1, oat_e2) -> cmp_bop c oat_binop oat_e1 oat_e2
   | Uop (oat_unop, oat_e) -> cmp_uop c oat_unop oat_e
      
-and cmp_str str = 
-  let ll_uid1 = gensym "str" in 
+and cmp_str s = 
+  let ll_uid1 = gensym "glbl_str" in 
+  let ll_uid2 = gensym "str_arr" in 
+  let ll_uid3 = gensym "lcl_str_dref" in 
+  let ll_parent_str_ty = cmp_ty @@ TRef RString in 
+  let ll_actual_str_ty = Array (String.length s + 1, I8) in
   let ll_stream = 
     []
-    >:: G (ll_uid1, (Array (String.length str + 1, I8), GString str))
+    >:: G (ll_uid1, (ll_parent_str_ty, GBitcast (Ptr ll_actual_str_ty, GGid ll_uid2, ll_parent_str_ty)))
+    >:: G (ll_uid2, (ll_actual_str_ty, GString s))
+    >:: I (ll_uid3, Load (Ptr ll_parent_str_ty, Gid ll_uid1))
   in
-    Ptr (Ptr I8), Gid ll_uid1, ll_stream
+    (Ptr I8), Id ll_uid3, ll_stream
+
+and cmp_carr (c : Ctxt.t) (oat_ty : Ast.ty) (oat_e_lst : exp node list) : Ll.ty * Ll.operand * stream = 
+  let lst_size = List.length oat_e_lst in
+  let ll_arr_id = gensym "arr" in
+  let ll_arr_tempid = gensym "temp" in 
+  let ll_arr_ty, ll_op, ll_stream1 = oat_alloc_array oat_ty (Const (Int64.of_int lst_size)) in
+  let _, ll_pop_stream = List.fold_left (fun (ind, streams) e ->
+    let ll_ty, ll_op, ll_stream1 = cmp_exp c e in
+    let ll_uid = gensym "ptr" in 
+    let ll_stream = 
+      streams
+      >@ ll_stream1
+      >:: I (ll_uid, Gep (ll_arr_ty, Id ll_arr_tempid, [Const 0L; Const 1L; Const (Int64.of_int ind)]))
+      >:: I ("", Store (ll_ty, ll_op, Id ll_uid)) 
+    in ind + 1, ll_stream
+    ) (0, []) oat_e_lst in
+  let ll_stream = 
+    []
+    >:: I (ll_arr_id, Alloca ll_arr_ty)
+    >@ ll_stream1 
+    >:: I ("", Store (ll_arr_ty, ll_op, Id ll_arr_id))
+    >:: I (ll_arr_tempid, Load (Ptr ll_arr_ty, Id ll_arr_id)) 
+    >@ ll_pop_stream
+  in 
+    ll_arr_ty, Id ll_arr_tempid, ll_stream
+
+and cmp_new_arr (c : Ctxt.t) (oat_ty : Ast.ty) (oat_e : exp node) : Ll.ty * Ll.operand * stream =
+  let _, ll_op, ll_stream1 = cmp_exp c oat_e in 
+  let ll_ty2, ll_op2, ll_stream2 = oat_alloc_array oat_ty ll_op in
+  let ll_uid1 = gensym "arr" in 
+  let ll_uid2 = gensym "arr_dref" in 
+  let ll_stream = 
+    ll_stream1
+    >:: E (ll_uid1, Alloca ll_ty2)
+    >@ ll_stream2
+    >:: I ("", Store (ll_ty2, ll_op2, Id ll_uid1)) 
+    >:: I (ll_uid2, Load (Ptr ll_ty2, Id ll_uid1))
+  in
+    ll_ty2, Id ll_uid2, ll_stream
 
 and cmp_call (c : Ctxt.t) (oat_fn_name : exp node) (oat_fn_args : exp node list) : Ll.ty * Ll.operand * stream =
   let fn_name = Exp.get_id oat_fn_name in 
@@ -424,7 +468,7 @@ and cmp_bop (c : Ctxt.t) (oat_binop : binop) (oat_e1 : exp node) (oat_e2 : exp n
   let oat_ty1, oat_ty2, oat_ty = typ_of_binop oat_binop in  
   let ll_ty = cmp_ty oat_ty in  
   let ll_uid = gensym "binop_temp" in 
-  let ll_stream = begin
+  let ll_ins = begin
     match oat_ty1, oat_ty2, oat_ty with
     | TInt, TInt, TInt
     | TBool, TBool, TBool -> 
@@ -438,7 +482,7 @@ and cmp_bop (c : Ctxt.t) (oat_binop : binop) (oat_e1 : exp node) (oat_e2 : exp n
   let ll_stream = 
     ll_stream1
     >@ ll_stream2 
-    >:: ll_stream
+    >:: ll_ins
   in 
     ll_ty, Id ll_uid, ll_stream  
 
@@ -606,10 +650,10 @@ and cmp_while (c : Ctxt.t) (oat_exp : exp node) (oat_block : Ast.block) : Ctxt.t
 let gdecl_to_ctxt (c : Ctxt.t) {elt={name;init={elt;_}}} : Ctxt.t = 
   let t = 
     match elt with 
-    | CNull rty -> Ptr (cmp_rty rty) 
+    | CNull rty -> Ptr (cmp_ty @@ TRef rty)
     | CBool _ -> Ptr (cmp_ty TBool) 
     | CInt _ -> Ptr (cmp_ty TInt)
-    | CStr str -> Ptr (Ptr I8)
+    | CStr str -> Ptr (cmp_ty @@ TRef RString)
     | CArr (t, lst) -> Ptr (cmp_ty @@ TRef (RArray t))
     | _ -> failwith "invalid gdecl"
   in 
@@ -693,7 +737,13 @@ let rec cmp_gexp c ({elt;}:Ast.exp node) : Ll.gdecl * (Ll.gid * Ll.gdecl) list =
   | CNull rty -> (cmp_ty @@ Ast.TRef rty, GNull), []
   | CBool b -> (cmp_ty TBool, GInt (if b then 1L else 0L)), [] 
   | CInt i -> (cmp_ty TInt, GInt i), []
-  | CStr s -> (Ll.Array (String.length s + 1, I8), GString s), []
+  | CStr s -> 
+    let parent_str_ty = cmp_ty @@ TRef RString in
+    let actual_str_ty = Ll.Array (String.length s + 1, I8) in 
+    let ll_uid = gensym "glbl_str" in 
+    let bitcast = parent_str_ty, GBitcast (Ptr actual_str_ty, GGid ll_uid, parent_str_ty)  
+    in
+      bitcast, [(ll_uid, (actual_str_ty, GString s))]
   | CArr (t, lst) -> 
     let arr_len = List.length lst in
     let el_ty = cmp_ty t in 

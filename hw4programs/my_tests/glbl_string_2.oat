@@ -1,0 +1,7 @@
+global str = "hello";
+
+int program(int argc, string[] argv) {
+    var x = length_of_string(str);
+
+    return x;
+}

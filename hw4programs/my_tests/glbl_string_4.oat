@@ -1,0 +1,9 @@
+global str1 = "hello";
+global str2 = "world";
+
+int program(int argc, string[] argv) {
+    var x = string_cat(str1, str2);
+    var y = length_of_string(x); 
+     
+    return y;
+}

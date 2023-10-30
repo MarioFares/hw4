@@ -1,0 +1,6 @@
+global gstr = "globl";
+
+int program(int argc, string[] argv) {
+    var x = new int[3];
+    return x[0];    
+}
