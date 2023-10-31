@@ -144,10 +144,18 @@ let easy_indassign_tests = [
 ]
 
 let easy_new_arr_tests = [
+  (* Integer Arrays *)
   ("hw4programs/my_tests/newarr_1.oat", "", "1")
 ; ("hw4programs/my_tests/newarr_2.oat", "", "0")
 ; ("hw4programs/my_tests/newarr_3.oat", "", "0")
 ; ("hw4programs/my_tests/newarr_4.oat", "", "1")
+; ("hw4programs/my_tests/newarr_5.oat", "", "6")
+  (* Boolean Arrays *)
+; ("hw4programs/my_tests/newarr_6.oat", "", "0")
+; ("hw4programs/my_tests/newarr_7.oat", "", "10")
+; ("hw4programs/my_tests/newarr_8.oat", "", "10")
+; ("hw4programs/my_tests/newarr_9.oat", "", "0")
+; ("hw4programs/my_tests/newarr_10.oat", "", "10")
 ]
 
 let easy_carr_tests = [
@@ -174,6 +182,6 @@ let provided_tests : suite = [
   Test (">>> easy index tests", executed_oat_file easy_index_tests);
   Test (">>> easy index assign tests", executed_oat_file easy_indassign_tests);
   Test (">>> easy new array tests", executed_oat_file easy_new_arr_tests);
-  Test (">>> easy arr tests", executed_oat_file easy_carr_tests);
+  Test (">>> easy carr tests", executed_oat_file easy_carr_tests);
   Test (">>> global string tests", executed_oat_file global_string_tests);
 ] 

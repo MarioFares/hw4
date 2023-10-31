@@ -1,0 +1,10 @@
+int program(int argc, string[] argv) {
+    var x = new bool[2];
+    x[0] = false;
+    x[1] = false;
+    var y = 0;
+    if (x[0] | x[1]) {
+        y = 10;
+    }
+    return y;
+}
