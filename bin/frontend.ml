@@ -574,9 +574,9 @@ and cmp_decl (c : Ctxt.t) ((id, elt) : vdecl) : Ctxt.t * stream =
     ll_stream1
     >:: E (ll_uid, Alloca ll_ty)
     >:: I ("", Store (ll_ty, ll_op, Id ll_uid)) in
-  let c = Ctxt.add c id (Ptr ll_ty, Id ll_uid) 
+  let c' = Ctxt.add c id (Ptr ll_ty, Id ll_uid) 
   in 
-    c, ll_stream
+    c', ll_stream
     
 and cmp_ret (c : Ctxt.t) (en_opt : exp node option) : Ctxt.t * stream = 
   match en_opt with 
@@ -594,8 +594,8 @@ and cmp_scall (c : Ctxt.t) (oat_fn_name : exp node) (oat_fn_args : exp node list
 
 and cmp_if (c : Ctxt.t) (oat_exp : exp node) (oat_true_block : Ast.block) (oat_else_block : Ast.block) : Ctxt.t * stream = 
   let _, ll_op, ll_stream1 = cmp_exp c oat_exp in 
-  let c, ll_true_stream = cmp_block c Void oat_true_block in
-  let c, ll_else_stream = cmp_block c Void oat_else_block in
+  let _, ll_true_stream = cmp_block c Void oat_true_block in
+  let _, ll_else_stream = cmp_block c Void oat_else_block in
   let ll_uid = gensym "cmp_res" in 
   let ll_true_id = gensym "true_block" in 
   let ll_else_id = gensym "else_block" in
@@ -623,11 +623,13 @@ and cmp_for (c : Ctxt.t) (vdecl_lst : vdecl list) (exp_opt : exp node option) (s
       no_loc @@ While (oat_cnd, stmt_lst @ oat_incs) 
     ]
   in
-    cmp_block c Ll.Void oat_while_loop
+  let _, ll_stream = cmp_block c Ll.Void oat_while_loop 
+  in 
+    c, ll_stream
 
 and cmp_while (c : Ctxt.t) (oat_exp : exp node) (oat_block : Ast.block) : Ctxt.t * stream = 
   let _, ll_op, ll_stream1 = cmp_exp c oat_exp in
-  let c, ll_body_stream = cmp_block c Ll.Void oat_block in 
+  let _, ll_body_stream = cmp_block c Ll.Void oat_block in 
   let ll_uid = gensym "cmp_res" in 
   let ll_entry_uid = gensym "while_start" in
   let ll_body_uid = gensym "while_body" in

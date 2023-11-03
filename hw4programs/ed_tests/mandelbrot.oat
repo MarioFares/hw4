@@ -1,0 +1,55 @@
+/*
+Things that (I don't think are tested before)
+1) Multi-variable declarations in for loops
+2) This also uses the builtin string_cat, which hasn't been used in any other tests
+3) Ending on a for loop (how do you handle empty blocks?)
+*/
+
+/* 2^dim is the number of pixels */
+global dim = 6;
+
+/* POW 2 precision */
+global precision = 15;
+
+bool in_mandel(int x0, int y0) {
+    x0 = (x0 * 3) << (precision - dim - 1);
+    y0 = (y0 * 3) << (precision - dim - 1);
+    y0 = (y0 * 13) >>> 3; /* adjust for shape of character */
+    x0 = x0 - (1 << (precision - 1));
+    var it = 0;
+    for (
+        var x = 0, var y = 0;
+        (x * x + y * y <= (1 << (2 + (precision << 1)))) & it < 100;
+        it = it + 1;
+    ) {
+        var xtmp = ((x * x - y * y) >>> precision) + x0;
+        y = ((x * y) >>> (precision - 1)) + y0;
+        x = xtmp;
+    }
+    return it == 100;
+}
+
+void do_mandel() {
+    var hi = 1 << (dim - 1);
+    var lo = hi - (1 << dim);
+    for (var y = hi; y >= lo; y = y - 1;) {
+        var row = "";
+        for (var x = lo << 1; x <= hi << 1; x = x + 1;) {
+           if (in_mandel(x, y)) {
+            row = string_cat(row, "#");
+           } else {
+            row = string_cat(row, " ");
+           }
+        }
+        print_string(row);
+        if (y != lo) {
+            print_string("\n");
+        }
+    }
+    return;
+}
+
+int program(int argc, string[] argv) {
+    do_mandel();
+    return 1;
+}

@@ -1,0 +1,87 @@
+global strings = new string[]{"foo", "bar", "baz", "\"", "\\"};
+global nstrings = 5;
+global matched = bool[] null;
+global i = 55;
+
+int strcmp(string fst, string snd) {
+    var a = array_of_string(fst);
+    var a_len = length_of_string(fst);
+    var b = array_of_string(snd);
+    var b_len = length_of_string(snd);
+    var len = a_len;
+    if (b_len < a_len) {
+        len = b_len;
+    }
+    for (var i = 0; i < len; i = i + 1;) {
+        if (a[i] != b[i]) {
+            return a[i] - b[i];
+        }
+    }
+    return a_len - b_len;
+}
+
+/* simple insertion sort */
+void sort_args(int argc, string[] argv) {
+    /* note the 2s to ignore the program name */
+    for (var i = 2; i < argc; i = i + 1;) {
+        for (var j = i; j >= 2; j = j - 1;) {
+            if (strcmp(argv[j], argv[j - 1]) < 0) {
+                var temp = argv[j];
+                argv[j] = argv[j - 1];
+                argv[j - 1] = temp;
+            }
+        }
+    }
+    return;
+}
+
+int program(int argc, string[] argv) {
+    matched = new bool[nstrings];
+    for (var i = 0; i < nstrings; i = i + 1;) {
+        if (matched[i]) {
+            print_string("Bool array wasn't false-initialized\n");
+            return 1;
+        }
+    }
+    for (var i = 0; i < argc - 1 & i < nstrings; i = i + 1;) {
+        if (strcmp(argv[i + 1], strings[i]) == 0) {
+            matched[i] = true;
+        } else {
+            print_string("Strings at index ");
+            print_int(i);
+            print_string(" mismatched: expected ");
+            print_string(strings[i]);
+            print_string(", got ");
+            print_string(argv[i + 1]);
+            print_string("\n");
+            return 1;
+        }
+    }
+    for (var i = 0; i < nstrings; i = i + 1;) {
+        if (!matched[i]) {
+            print_string("Not enough strings!\n");
+            return 1;
+        }
+    }
+    sort_args(argc, argv);
+    print_string("Your arguments in order:\n");
+    for (var i = 1; i < argc; i = i + 1;) {
+        print_string(argv[i]);
+        print_string("\n");
+    }
+    print_string("And some integers:\n");
+    /* This should refer to the global */
+    print_int(i);
+    print_string("\n");
+    var x = 0;
+    /* Global shadowing is ok, local shadowing is not */
+    for (var i = 0; i <= 10; i = i + 1;) {
+        x = x + i;
+    }
+    print_int(x);
+    print_string("\n");
+    /* This is again the global */
+    print_int(i);
+    print_string("\n");
+    return 0;
+}

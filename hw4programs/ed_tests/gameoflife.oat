@@ -1,0 +1,104 @@
+/* 2^dim is the number of pixels */
+global dim = 24;
+global alive = 88;
+global dead = 46;
+
+/* 
+    Given a board of D * D values with the least significant bit 
+    corresponding to 0, 1 prints the string representation. 
+*/ 
+void print_board(int[][] arr) {
+    var str_arr = new int[(dim+1)*dim];
+    for (var i=0; i<dim; i=i+1;) {
+        for (var j=0; j<dim; j=j+1;) {
+            /* We only care about the 0th bit */
+            var pos_value = arr[i][j] [&] 1;
+            if (pos_value == 0) {
+                str_arr[i*(dim+1)+j] = dead;
+            } else {
+                if (pos_value == 1) {
+                    str_arr[i*(dim+1)+j] = alive;
+                } else {
+                    print_string("Array values should be 0 or 1\n Begotten value:");
+                    print_int(pos_value);
+                    print_string("\n");
+                    return ;
+                }
+            }
+        }
+        str_arr[i*(dim+1)+dim] = 10;
+    }
+    print_string(string_of_array(str_arr));
+    return;
+}
+
+/* 
+    Utility function to treat out-of-bounds values as always zero. 
+    Only cares about the least significant bit 
+*/
+int at(int[][] arr, int i, int j) {
+    if (i < 0 | i>=dim | j < 0 | j >= dim) {
+        return 0;
+    } else {
+        return arr[i][j] [&] 1;
+    }
+}
+
+/* Counts the number of alive neighbors of a position */
+int alive_neighbor_count(int[][] arr, int i, int j) {
+    return at(arr, i-1, j-1) + at(arr, i-1, j) + at(arr, i-1, j+1) + 
+            at(arr, i, j-1) + at(arr, i, j+1) + at(arr, i+1, j-1) + 
+            at(arr, i+1, j) + at(arr, i+1, j+1);
+}
+
+void step(int[][] arr){
+    for (var i=0; i<dim; i=i+1;) {
+        for (var j=0; j<dim; j=j+1;) {
+            var nn = alive_neighbor_count(arr, i, j);
+            /* 
+                Birth: A dead cell with exactly 3 live neighbors becomes alive (or is "born").
+                Survival: A live cell with 2 or 3 live neighbors remains alive.
+                Death by Underpopulation: A live cell with fewer than 2 live neighbors dies.
+                Death by Overpopulation: A live cell with more than 3 live neighbors dies.
+            */
+            if (nn == 3 | (nn == 2 & arr[i][j] == 1)) {
+                /* Set the 2nd bit to 1 */
+                arr[i][j] = arr[i][j] [|] 2;
+            }
+        }
+    }
+
+    /* Discard the 1st bit and replace with the 2nd bit */
+    for (var i=0; i<dim; i=i+1;) {
+        for (var j=0; j<dim; j=j+1;) {
+            arr[i][j] = arr[i][j] >> 1;
+        }
+    }
+    return;
+}
+
+int program(int argc, string[] argv) {
+    var arr = new int[][]{
+                new int[dim], new int[dim], new int[dim], new int[dim], 
+                new int[dim], new int[dim], new int[dim], new int[dim], 
+                new int[dim], new int[dim], new int[dim], new int[dim], 
+                new int[dim], new int[dim], new int[dim], new int[dim], 
+                new int[dim], new int[dim], new int[dim], new int[dim], 
+                new int[dim], new int[dim], new int[dim], new int[dim]
+            };
+    /*
+    Minimal paraglider.  
+    */
+    arr[0][2] = 1;
+    arr[1][0] = 1;
+    arr[1][2] = 1;
+    arr[2][1] = 1;
+    arr[2][2] = 1;
+    print_board(arr);
+    print_string("\n");
+    for (var i = 0; i < 64; i = i+1;) {
+        step(arr);
+    }
+    print_board(arr);
+    return 0;
+}

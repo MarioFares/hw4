@@ -190,7 +190,6 @@ stmt:
         RPAREN b=block { loc $startpos $endpos @@ For(ds, None, Some s, b)}
   | FOR LPAREN ds=separated_list(COMMA, vdecl) SEMI
                e=exp SEMI
-               SEMI
         RPAREN b=block { loc $startpos $endpos @@ For(ds, Some e, None, b)}
   | FOR LPAREN ds=separated_list(COMMA, vdecl) 
                SEMI

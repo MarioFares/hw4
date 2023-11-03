@@ -1,0 +1,67 @@
+global arr = new int[] {1, 2, 3, 1, 0};
+
+/* for loop with no declaration, condition or statement */
+int for1() {
+    var x = 0;
+
+    for (;;) {
+        x = x + 1;
+        if (x == 10) {
+            return x;
+        }
+    }
+
+    return x;
+}
+
+/* for loop with no declarations and no body */
+int for2() {
+    var x = 0;
+
+    for (; x < 10; x = x + 1;) {
+    }
+
+    return x;
+}
+
+/* for loop with no condition */
+int for3() {
+    var x = 0;
+
+    for (var i = 0; ; i = i + 1;)  {
+        x = i;
+        if (x == 10) {
+            return x;
+        }
+    }
+
+    return x;
+}
+
+/* for loop with no statement */
+int for4() {
+    var x = 0;
+
+    for (var i = 0; i < 10;) {
+        i = i + 1;
+        x = i;
+    }
+
+    return x;
+}
+
+int program(int argc, string[] argv) {
+    var a = for1(); 
+    var b = for2();
+    var c = for3();
+    var d = for4();
+
+    /* should be 2 */
+    var e = arr[arr[arr[arr[arr[0]]]]];
+
+    /* location is the same as the above */
+    arr[arr[arr[arr[arr[0]]]]] = 8;
+    var f = arr[arr[arr[arr[arr[0]]]]];
+
+    return a + b + c + d + e + f;
+}
