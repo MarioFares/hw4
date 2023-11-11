@@ -1,0 +1,5 @@
+global i = 42;
+
+int program(int argc, string[] argv) {
+    return i;
+}

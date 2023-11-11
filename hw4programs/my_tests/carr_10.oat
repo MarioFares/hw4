@@ -1,0 +1,21 @@
+int program(int argc, string[] argv) {
+    var arr = new bool[][][] {
+        new bool[][] {
+            new bool[] { true, false, true},
+            new bool[] { true, false, true},
+            new bool[] { true, false, true}
+        },
+        new bool[][] {
+            new bool[] { false, true, false},
+            new bool[] { false, true, false},
+            new bool[] { false, true, false}
+        }
+    };
+
+    var x = 0;
+    if (arr[1][2][1]) {
+        x = 10;
+    }
+
+    return x;
+}

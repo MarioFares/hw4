@@ -750,27 +750,19 @@ let rec cmp_gexp c ({elt;}:Ast.exp node) : Ll.gdecl * (Ll.gid * Ll.gdecl) list =
     let arr_len = List.length lst in
     let el_ty = cmp_ty t in 
     let parent_arr_typ = cmp_ty @@ TRef (RArray t) in
-    let actual_arr_typ = Struct [I64; Array (arr_len, el_ty)]  in
-    let elts, decl_lst = List.fold_left (fun (acc1, acc2) x -> 
-      let gdecl, lst = cmp_gexp c x in 
-      match t with 
-      | TRef (RArray t') -> 
-        let gid = gensym "glbl" in
-        acc1 @ [cmp_rty @@ RArray t', GGid gid], acc2 @ lst @ [gid, gdecl] 
-      | _ -> acc1 @ [gdecl], acc2 @ lst 
-      ) ([], []) lst 
-    in 
+    let actual_arr_typ = Struct [I64; Array (arr_len, el_ty)] in
+    let elts, decl_lst = List.split @@ List.map (cmp_gexp c) lst in
+    let decl_lst = List.flatten decl_lst in 
     let ll_arr_id = gensym "global_arr" in 
-    let bitcast = parent_arr_typ, GBitcast (Ptr actual_arr_typ, GGid ll_arr_id, parent_arr_typ) in 
-    let ll_actual_array =
+    let ll_actual_array = 
       ll_arr_id,  
       (actual_arr_typ, GStruct [
         (Ll.I64, GInt (Int64.of_int @@ arr_len))
       ; (Ll.Array (arr_len, el_ty), GArray elts)
-      ])
+      ]) in 
+    let bitcast = parent_arr_typ, GBitcast (Ptr actual_arr_typ, GGid ll_arr_id, parent_arr_typ) 
     in 
       bitcast, ll_actual_array :: decl_lst
-    
   | _ -> failwith "cmp_gexp: invalid element"
 
 

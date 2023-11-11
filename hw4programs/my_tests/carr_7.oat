@@ -1,0 +1,10 @@
+int program(int argc, string[] argv) {
+    var arr = new string[][] {
+        new string[] { "true",  "false", "false"},
+        new string[] { "false",  "true", "false"},
+        new string[] { "false", "false", "true"}
+    };
+
+    print_string(arr[0][2]);
+    return 0;
+}

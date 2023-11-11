@@ -1,6 +1,11 @@
 open Util.Assert
 open Gradedtests
 
+(* These tests are provided by you -- they will be graded manually *)
+
+(* You should also add additional test cases here to help you   *)
+(* debug your program.                                          *)
+
 let mandel_output =
 "                                                                                                                                 
                                                                                                                                  
@@ -145,13 +150,28 @@ And some integers:
 55
 55"
 
+let bf_code = "\">++++++++[<+++++++++>-]<.>++++[<+++++++>-]<+.+++++++..+++.>>++++++[<+++++++>-]<+
++.------------.>++++++[<+++++++++>-]<+.<.+++.------.--------.>>>++++[<++++++++>-
+]<+.,.,.\""
+
+let bf_input = bf_code ^ " " ^ "!?"
+
+let dijkstra_output = "v:dist(v, src), 0:0, 1:4, 2:12, 3:19, 4:21, 5:11, 6:9, 7:8, 8:14"
+
+let floyd_output = "Uenokouen to Yoyogikouen:22\nMeijishinguu to Meijishinguu: 0"
+
 let provided_tests : suite = [
     Test("Ed Tests", [
       "Mandelbrot",   assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/mandelbrot.oat" "") (mandel_output ^ "1");
       "Game of Life", assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/gameoflife.oat" "") (gol_output ^ "0");
       "Args 1",       assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/args.oat" args1) (args1_out ^ "1");
       "Args 2",       assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/args.oat" args2) (args2_out ^ "0");
-      "N Queens",       assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/nqueens.oat" "") (nqueens_output ^ "0");
-      "for land", assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/my_test.oat" "") ("50")
-    ]);
+      "N Queens",     assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/nqueens.oat" "") (nqueens_output ^ "0");
+      "for tests",    assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/for_land.oat" "") ("50");
+      "bf interp",    assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/bf.oat" bf_input) ("Hello, World!!?0");
+      "nest arrays",  assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/nest_arrays.oat" "") ("232324" ^ "0");
+      "icpc stack",   assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/icpcstack.oat" "") ("128");
+      "Dijkstra SSP", assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/dijkstra_ssp.oat" "") (dijkstra_output ^ "0");
+      "Floyd Algo.",  assert_eqfs (fun () -> oat_file_test "hw4programs/ed_tests/floyd.oat" "") (floyd_output ^ "0");
+      ]);
 ]

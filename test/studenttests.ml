@@ -107,6 +107,7 @@ let easy_for_tests = [
 ; ("hw4programs/my_tests/for_12.oat", "", "0")
 ]
 
+(* No arrays involved in these tests though. *)
 let easy_string_tests = [
   (* Testing with built-ins *)
   ("hw4programs/my_tests/string_1.oat", "", "0")
@@ -143,6 +144,8 @@ let easy_indassign_tests = [
 ; ("hw4programs/my_tests/indassign_5.oat", "", "50")
 ]
 
+(* Default initialized arrays. No other types besides *)
+(* integers and booleans are allowed. *)
 let easy_new_arr_tests = [
   (* Integer Arrays *)
   ("hw4programs/my_tests/newarr_1.oat", "", "1")
@@ -159,7 +162,19 @@ let easy_new_arr_tests = [
 ]
 
 let easy_carr_tests = [
+  (* Basic Data Types - 1D Arrays *)
   ("hw4programs/my_tests/carr_1.oat", "", "2")
+; ("hw4programs/my_tests/carr_2.oat", "", "20")
+; ("hw4programs/my_tests/carr_3.oat", "", "foo0")
+; ("hw4programs/my_tests/carr_4.oat", "", "baz4")
+  (* 2D Arrays *)
+; ("hw4programs/my_tests/carr_5.oat", "", "24")
+; ("hw4programs/my_tests/carr_6.oat", "", "10")
+; ("hw4programs/my_tests/carr_7.oat", "", "false0")
+  (* 3D Arrays *)
+; ("hw4programs/my_tests/carr_8.oat", "", "5")
+; ("hw4programs/my_tests/carr_9.oat", "", "5")
+; ("hw4programs/my_tests/carr_10.oat", "", "10")
 ]
 
 let global_string_tests = [
@@ -168,6 +183,38 @@ let global_string_tests = [
 ; ("hw4programs/my_tests/glbl_string_2.oat", "", "5")
 ; ("hw4programs/my_tests/glbl_string_3.oat", "", "10")
 ; ("hw4programs/my_tests/glbl_string_4.oat", "", "10")
+; ("hw4programs/my_tests/glbl_string_5.oat", "", "foo0")
+; ("hw4programs/my_tests/glbl_string_6.oat", "", "foobar0")
+]
+
+let global_int_tests = [
+  ("hw4programs/my_tests/glbl_int_1.oat", "", "42")
+; ("hw4programs/my_tests/glbl_int_2.oat", "", "42")
+; ("hw4programs/my_tests/glbl_int_3.oat", "", "4")
+; ("hw4programs/my_tests/glbl_int_4.oat", "", "4")
+]
+
+let global_bool_tests = [
+  ("hw4programs/my_tests/glbl_bool_1.oat", "", "2")
+; ("hw4programs/my_tests/glbl_bool_2.oat", "", "2")
+; ("hw4programs/my_tests/glbl_bool_3.oat", "", "2")
+; ("hw4programs/my_tests/glbl_bool_4.oat", "", "2")
+; ("hw4programs/my_tests/glbl_bool_5.oat", "", "2")
+]
+
+let global_array_tests = [
+  ("hw4programs/my_tests/glbl_array_1.oat", "", "2")
+; ("hw4programs/my_tests/glbl_array_2.oat", "", "5")
+; ("hw4programs/my_tests/glbl_array_3.oat", "", "10")
+  (* 2D *)
+; ("hw4programs/my_tests/glbl_array_4.oat", "", "0")
+  (* 3D *)
+; ("hw4programs/my_tests/glbl_array_8.oat", "", "5")
+
+]
+
+let rand = [
+  ("hw4programs/austin.oat", "", "0")
 ]
 
 let provided_tests : suite = [
@@ -184,4 +231,8 @@ let provided_tests : suite = [
   Test (">>> easy new array tests", executed_oat_file easy_new_arr_tests);
   Test (">>> easy carr tests", executed_oat_file easy_carr_tests);
   Test (">>> global string tests", executed_oat_file global_string_tests);
+  Test (">>> global int tests", executed_oat_file global_int_tests);
+  Test (">>> global bool tests", executed_oat_file global_bool_tests);
+  Test (">>> global array tests", executed_oat_file global_array_tests);
+  Test (">>> rand", executed_oat_file rand);
 ] 

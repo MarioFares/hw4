@@ -1,0 +1,14 @@
+global bl1 = true;
+global bl2 = false;
+
+int program(int argc, string[] argv) {
+    bl1 = false;
+    bl2 = false;
+
+    var x = 0;
+    if (!bl1 & !bl2) {
+        x = 2;
+    }
+
+    return x;
+}

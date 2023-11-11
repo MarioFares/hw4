@@ -1,0 +1,10 @@
+int program(int argc, string[] argv) {
+    var arr = new bool[] {true, false};
+    var x = 0;
+    
+    if (arr[0]) {
+        x = 20;
+    }
+
+    return x;
+}

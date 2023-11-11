@@ -1,0 +1,8 @@
+global str1 = "foo";
+global str2 = "bar";
+
+int program(int argc, string[] argv) {
+    var s = string_cat(str1, str2);
+    print_string(s);
+    return 0;
+}

@@ -1,0 +1,6 @@
+global str1 = "foo";
+
+int program(int argc, string[] argv) {
+    print_string(str1);
+    return 0;
+}

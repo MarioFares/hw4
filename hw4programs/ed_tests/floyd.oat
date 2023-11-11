@@ -1,0 +1,60 @@
+/* floyd algorithm*/
+/* globally defined multi-dim array for distance matrix*/
+global adj = new int[][]{
+  new int[]{0, 8, 100, 3, 100, 100},
+  new int[]{8, 0, 4, 100, 100, 6},
+  new int[]{100, 4, 0, 9, 100, 100},
+  new int[]{3, 100, 9, 0, 100, 100},
+  new int[]{100, 100, 100, 100, 0, 5},
+  new int[]{100, 6, 100, 100, 5, 0}
+};
+
+global places = new string []{
+	"Ginza",
+	"Sensouji",
+	"Shinjukugyoen",
+	"Uenokouen",
+	"Yoyogikouen",
+	"Meijishinguu"
+};
+
+void floyd() {
+	var n = 6;
+
+	for(var k = 0;k < n;k=k+1;)
+	{
+		for(var i = 0;i < n;i=i+1;)
+		{
+			for(var j = 0;j < n;j=j+1;)
+			{
+				if(adj[i][j] > adj[i][k] + adj[k][j])
+				{
+					adj[i][j] = adj[i][k]+adj[k][j];
+				}
+			}
+		}
+	}
+	return;
+}
+
+int program()
+{
+	var from_1 = 3;
+	var to_1 = 4;
+	var from_2 = 5;
+	var to_2 = 5;
+	floyd();
+	print_string (places[from_1]);
+	print_string(" to ");
+	print_string(places[to_1]);
+	print_string(":");
+	print_int (adj[from_1][to_1]);
+	print_string("\n");
+	print_string (places[from_2]);
+	print_string(" to ");
+	print_string(places[to_2]);
+	print_string(": ");
+	print_int (adj[from_2][to_2]);
+	print_string("\n");
+    return 0;
+}

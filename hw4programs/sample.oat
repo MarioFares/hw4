@@ -1,6 +1,5 @@
-global gstr = "globl";
+global strings = new string[] {"foo"};
 
 int program(int argc, string[] argv) {
-    var x = new int[3];
-    return x[0];    
+    return 1; 
 }

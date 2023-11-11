@@ -1,0 +1,18 @@
+int node_left(int i, int[][] bintree){
+    return bintree[i][1];
+}
+
+int node_right(int i, int[][] bintree){
+    return bintree[i][2];
+}
+
+int node_val(int i, int[][] bintree){
+    return bintree[i][0];
+}
+
+int program (int argc, string[] argv) {
+    var x = new int[][] { new int[]{1,0,1}, new int[]{2,0,2}, new int[]{3,0,3}, new int[]{4,0,4}, new int[]{5,0,0}};
+    var y = node_val(4,x);
+    print_int(y);
+    return 0;
+}

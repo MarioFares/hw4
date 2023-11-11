@@ -1,0 +1,27 @@
+int program(int argc, string[] argv) {
+    var arr = new int[] {1, 2, 3, 4};
+    arr[0] = 5;
+    arr[1] = 4;
+    arr[2] = 3; 
+    arr[3] = 2;
+
+    var sum = arr[0] + arr[1] + arr[2] + arr[3]; 
+
+    var bls = new bool[] {true, false, true};
+    bls[0] = false;
+    bls[1] = true;
+    bls[2] = false;
+
+    var ret = 0;
+    if (bls[1] & sum == 14) {
+        ret = 4;
+    }
+
+    var strs = new string[] {"foo", "bar", "baz"};
+    strs[0] = "baz";
+    strs[1] = "bar";
+    strs[2] = "foo";
+
+    print_string(strs[0]);
+    return ret;
+}

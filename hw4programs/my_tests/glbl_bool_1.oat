@@ -1,0 +1,10 @@
+global bl = true;
+
+int program(int argc, string[] argv) {
+    var x = 0;
+    if (bl) {
+        x = 2;
+    }
+
+    return x;
+}

@@ -1,0 +1,64 @@
+global stack = int[] null;
+global inputs = new int[] {1, 2, 4, 1, 8, 16, 2, 16, 4, 4, 4, 4, 8, 8, 32, 64, 32, 16, 8, 4};
+global input_len = 20;
+global max_len = 0;
+global len = 0;
+
+void push_stack(int val) {
+    if (len == max_len) {
+        var new_len = 2 * max_len;
+        if (max_len == 0) {
+            new_len = 1;
+        }
+        var arr = new int[new_len];
+        for (var i = 0; i < max_len; i = i + 1;) {
+            arr[i] = stack[i];
+        }
+        stack = arr;
+        max_len = new_len;
+    }
+    stack[len] = val;
+    len = len + 1;
+    return;
+}
+
+int pop_stack() {
+    if (len == 0) {
+        return 0;
+    }
+    len = len - 1;
+    return stack[len];
+}
+
+void reduce() {
+    if (len < 2) {
+        return;
+    }
+    else {
+        var last = pop_stack();
+        var next = pop_stack();
+        if (next < last) {
+            push_stack(last);
+            reduce();
+            return;
+        }
+        if (next == last) {
+            push_stack(2 * last);
+            reduce();
+            return;
+        }
+        else {
+            push_stack(next);
+            push_stack(last);
+        }
+    }
+    return;
+}
+
+int program (int argc, string[] argv) {
+  for (var i = 0; i < input_len; i = i + 1;) {
+    push_stack(inputs[i]);
+    reduce();
+  }
+  return stack[0];
+}

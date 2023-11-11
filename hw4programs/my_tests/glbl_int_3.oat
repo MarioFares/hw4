@@ -1,0 +1,7 @@
+global i = 8;
+global j = 1;
+
+int program(int argc, string[] argv) {
+    var x = i >> j;
+    return x;
+}

@@ -1,0 +1,5 @@
+int program(int argc, string[] argv) {
+    var arr = new string[] {"foo", "bar"};
+    print_string(arr[0]);
+    return 0;
+}

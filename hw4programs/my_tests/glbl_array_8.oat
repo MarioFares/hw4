@@ -1,0 +1,9 @@
+global arr = new int[][][] {
+    new int[][] {
+        new int[] {5}
+    }
+};
+
+int program(int argc, string[] argv) {
+    return arr[0][0][0];
+}

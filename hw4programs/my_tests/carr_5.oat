@@ -1,0 +1,9 @@
+int program(int argc, string[] argv) {
+    var arr = new int[][] {
+        new int[] { 1,  2,  3,  4,  5},
+        new int[] { 2, 22, 23, 24, 25},
+        new int[] { 3, 32, 33, 24, 25}
+    };
+
+    return arr[1][3];
+}

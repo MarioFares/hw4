@@ -1,0 +1,6 @@
+global i = 40;
+global j = 2;
+
+int program(int argc, string[] argv) {
+    return i + j;
+}

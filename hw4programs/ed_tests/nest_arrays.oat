@@ -1,0 +1,49 @@
+/* Validating You Can Return Multi-Nested Indexing */
+
+int g(int[][] x) {
+  return x[0][0];
+}
+
+
+/* Validating You Can Call on Multi-Nested Arrays And Do Multi-Indexing */
+
+int f(int[][][][][] x) {
+  var a = x[1][0];
+  var b = a[0][0][2];
+  var c = a[0];
+
+  /* This Returns 12 + 11 */
+  var d = g(c);
+  var e = c[0][1];
+  print_int(d + e);
+
+  return d + e;
+}
+
+
+/* Testing Multi-Nested Array Creation */
+
+int program (int argc, string[] argv) {
+  var x = new int[][][][][]{      new int[][][][]{  new int[][][]{  new int[][]{  new int[]{1,2,3}, new int[]{4,5,6}     }},
+                                                    new int[][][]{  new int[][]{  new int[]{7,8,9}, new int[]{10,11,12}  }}  },
+                                  new int[][][][]{  new int[][][]{  new int[][]{  new int[]{12,11,10}, new int[]{9,8,7}     }},
+                                                    new int[][][]{  new int[][]{  new int[]{6,5,4}, new int[]{3,2,1}  }}  }
+                                  
+                            };
+  
+  /* This Returns 1 */
+  var a = x[1];
+  var b = a[1];
+  var c = b[0];
+  var d = c[1];
+  var e = d[2];
+  
+  /* This Returns 23 */
+  var f = f(x);
+  print_int(f);
+
+  /* This Returns 24 */
+  var g = e + f;
+  print_int(g);
+  return 0;
+}
